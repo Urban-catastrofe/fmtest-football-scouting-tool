@@ -285,15 +285,37 @@ namespace fmtest
         public int CalculateWonderkidPotential(PlayerAttributes pa)
         {
             var potential = 0;
-            int ageMultiplierBase = 15; // Base age for maximum potential multiplier
-            int maxMultiplier = 5; // Maximum multiplier for a 15-year-old player
-            int minMultiplier = 1; // Minimum multiplier for older players
-
-            int ageMultiplier = pa.Age > ageMultiplierBase ? minMultiplier : maxMultiplier - (pa.Age - 15);
-
-            potential += (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;
+            potential += CalculateBasePotential(pa);
 
             return potential;
+        }
+
+        private int CalculateBasePotential(PlayerAttributes pa)
+        {
+            int ageMultiplier = CalculateAgeMultiplier(pa.Age);
+            return (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;
+        }
+
+        private int CalculateAgeMultiplier(int age)
+        {
+            int maxAge = 21; // Age at which potential starts to decline more noticeably
+            int minMultiplier = 1;
+            int maxMultiplier = 5;
+
+            if (age <= 15)
+            {
+                return maxMultiplier;
+            }
+            else if (age > maxAge)
+            {
+                return minMultiplier;
+            }
+            else
+            {
+                // Polynomial decline from 16 to maxAge
+                double multiplierDeclineRate = (maxMultiplier - minMultiplier) / Math.Pow(maxAge - 15, 2);
+                return maxMultiplier - (int)(multiplierDeclineRate * Math.Pow(age - 15, 2));
+            }
         }
 
     }

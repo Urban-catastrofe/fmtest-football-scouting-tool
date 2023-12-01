@@ -21,10 +21,14 @@ namespace fmtest
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly FolderBrowserHandler folderBrowserHandler = new FolderBrowserHandler();
+
         public MainWindow()
         {
             InitializeComponent();
+            LoadCachedDirectory();
         }
+
 
         private void FindFileButton_Click(object sender, RoutedEventArgs e)
         {
@@ -93,7 +97,7 @@ namespace fmtest
         public string GetPath()
         {
             // Specify your folder path here
-            string folderPath = @"C:\Users\Emmis\Documents\Sports Interactive";
+            string folderPath = txtSelectedFolder.Text;
 
             // Ensure the folder exists
             if (!Directory.Exists(folderPath))
@@ -240,6 +244,25 @@ namespace fmtest
             }
 
             return players;
+
+        }
+
+        private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
+        {
+            string selectedPath = folderBrowserHandler.OpenFolderBrowserDialog();
+            if (!string.IsNullOrEmpty(selectedPath))
+            {
+                txtSelectedFolder.Text = selectedPath;
+            }
+        }
+
+        private void LoadCachedDirectory()
+        {
+            string cachedPath = folderBrowserHandler.GetCachedDirectory();
+            if (!string.IsNullOrEmpty(cachedPath))
+            {
+                txtSelectedFolder.Text = cachedPath;
+            }
         }
 
     }
