@@ -10,6 +10,7 @@
         public string Club { get; set; }
         public string TransferValue { get; set; }
         public string Wage { get; set; }
+        public string Height { get; set; }
         public string MinAP { get; set; }
         public string MinFeeRls { get; set; }
         public string MinFeeRlsToForeignClubs { get; set; }
@@ -25,6 +26,7 @@
         public int WingBackAttacking { get; set; }
         public int SweeperKeeper { get; set; }
         public int DeepLyingPlaymaker { get; set; }
+        public int DefensiveMidfielder { get; set; }
 
     }
 }

@@ -80,6 +80,7 @@ namespace fmtest
                     MediaHandling = player.MediaHandling,
                     LeftFoot = player.LeftFoot,
                     RightFoot = player.RightFoot,
+                    Height = player.Height,
                     AdvancedForwardScore = abilityCalculations.CalculateAdvancedForward(player),
                     BpdDefendScore = abilityCalculations.CalculateBpdOnDefend(player),
                     InsideForwardScore = abilityCalculations.CalculateInsideForward(player),
@@ -88,6 +89,7 @@ namespace fmtest
                     SweeperKeeper = abilityCalculations.CalculateSweeperKeeper(player),
                     DeepLyingPlaymaker = abilityCalculations.CalculateDeepLyingPlaymaker(player),
                     WonderkidScore = abilityCalculations.CalculateWonderkidPotential(player),
+                    DefensiveMidfielder = abilityCalculations.CalculateDefensiveMidfielder(player)
                 });
             }
 

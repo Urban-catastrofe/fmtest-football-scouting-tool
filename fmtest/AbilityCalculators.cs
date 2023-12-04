@@ -282,6 +282,36 @@ namespace fmtest
             return ability;
         }
 
+        public int CalculateDefensiveMidfielder(PlayerAttributes pa)
+        {
+            var ability = 0;
+
+            // Weights for key attributes, higher because they are essential for the role.
+            int weightKey = 3;
+
+            // Key attributes for a defensive midfielder
+            ability += pa.Mar * weightKey; // Marking
+            ability += pa.Tck * weightKey; // Tackling
+            ability += pa.Str * weightKey; // Strength
+            ability += pa.Pos * weightKey; // Positioning
+
+            // Secondary attributes for a defensive midfielder
+            int weightSecondary = 2;
+            ability += pa.Wor * weightSecondary; // Work Rate
+            ability += pa.Sta * weightSecondary; // Stamina
+            ability += pa.Agi * weightSecondary; // Agility
+            ability += pa.Bal * weightSecondary; // Balance
+
+            // Additional attributes that could benefit a defensive midfielder
+            int weightAdditional = 1;
+            ability += pa.Pas * weightAdditional; // Passing
+            ability += pa.Dec * weightAdditional; // Decisions
+            ability += pa.Ant * weightAdditional; // Anticipation
+            ability += pa.Tea * weightAdditional; // Teamwork
+
+            return ability;
+        }
+
         public int CalculateWonderkidPotential(PlayerAttributes pa)
         {
             var potential = 0;
