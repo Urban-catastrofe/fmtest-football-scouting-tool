@@ -328,7 +328,7 @@ namespace fmtest
 
         private int CalculateAgeMultiplier(int age)
         {
-            int maxAge = 21; // Age at which potential starts to decline more noticeably
+            int maxAge = 21;
             int minMultiplier = 1;
             int maxMultiplier = 5;
 
@@ -342,7 +342,6 @@ namespace fmtest
             }
             else
             {
-                // Polynomial decline from 16 to maxAge
                 double multiplierDeclineRate = (maxMultiplier - minMultiplier) / Math.Pow(maxAge - 15, 2);
                 return maxMultiplier - (int)(multiplierDeclineRate * Math.Pow(age - 15, 2));
             }

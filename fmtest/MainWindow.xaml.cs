@@ -98,27 +98,22 @@ namespace fmtest
 
         public string GetPath()
         {
-            // Specify your folder path here
             string folderPath = txtSelectedFolder.Text;
 
-            // Ensure the folder exists
             if (!Directory.Exists(folderPath))
             {
                 Console.WriteLine("Folder does not exist.");
                 return "";
             }
 
-            // Get all files in the folder
             var files = Directory.GetFiles(folderPath);
 
-            // Check if there are any files in the folder
             if (files.Length == 0)
             {
                 Console.WriteLine("No files found in the folder.");
                 return "";
             }
 
-            // Find the most recent file
             var mostRecentFile = files.OrderByDescending(f => File.GetCreationTime(f)).FirstOrDefault();
             Console.WriteLine("Most recent file: " + mostRecentFile);
             return mostRecentFile;
@@ -145,11 +140,9 @@ namespace fmtest
                 }
                 else
                 {
-                    // Handle the case where there are no <th> elements
-                    // For example, you might want to create columns based on the first row <td> elements
+                    //exception
                 }
 
-                // Adding rows
                 foreach (HtmlNode row in htmlNode.SelectNodes("tr[position()>1]"))
                 {
                     DataRow dataRow = dataTable.NewRow();
