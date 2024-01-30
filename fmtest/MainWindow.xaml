@@ -15,7 +15,7 @@
         <Button Name="btnSelectFolder" Click="btnSelectFolder_Click" Content="Select Folder" HorizontalAlignment="Center" Margin="0,36,0,0" VerticalAlignment="Top" Width="100" Grid.Column="1"/>
         <TextBlock Name="txtSelectedFolder" HorizontalAlignment="Left" Margin="0,35,0,0" TextWrapping="Wrap" Text="Selected folder path will appear here" VerticalAlignment="Top" Grid.Column="2"/>
         <Button x:Name="FindFileButton" Content="Find Recent File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="FindFileButton_Click" Margin="29,41,0,0"/>
-        <DataGrid x:Name="PlayerDataGrid" AutoGenerateColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" Margin="10,125,31,127" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="3">
+        <DataGrid x:Name = "PlayerDataGrid" AutoGenerateColumns = "True" EnableRowVirtualization = "True" EnableColumnVirtualization = "True" Margin = "10,125,31,127" RenderTransformOrigin = "0.5,0.5" Grid.ColumnSpan = "3">
             <DataGrid.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>

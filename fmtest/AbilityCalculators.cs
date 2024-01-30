@@ -1,12 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace fmtest
+﻿namespace fmtest
 {
-    class AbilityCalculators
+    /// <summary>
+    /// Interface for ability calculators.
+    /// </summary>
+    interface IAbilityCalculators
+    {
+        /// <summary>
+        /// Calculates the ability score for a Ball-Playing Defender on Defend duty.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateBpdOnDefend(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for a Segundo Volante on Support duty.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateSegundoVolanteOnSupport(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for an Advanced Forward.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateAdvancedForward(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for an Inside Forward.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateInsideForward(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for a Wing Back (Attacking).
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateWingBackAttacking(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for a Sweeper Keeper.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateSweeperKeeper(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for a Deep-Lying Playmaker.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateDeepLyingPlaymaker(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the ability score for a Defensive Midfielder.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The ability score.</returns>
+        int CalculateDefensiveMidfielder(PlayerAttributes pa);
+
+        /// <summary>
+        /// Calculates the potential ability score for a wonderkid.
+        /// </summary>
+        /// <param name="pa">The player attributes.</param>
+        /// <returns>The potential ability score.</returns>
+        int CalculateWonderkidPotential(PlayerAttributes pa);
+    }
+
+    class AbilityCalculators : IAbilityCalculators
     {
         public int CalculateBpdOnDefend(PlayerAttributes pa)
         {
