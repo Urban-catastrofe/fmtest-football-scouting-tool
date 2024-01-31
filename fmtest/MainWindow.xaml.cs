@@ -40,12 +40,10 @@ namespace fmtest
             try
             {
                 dataTable = ParseHtmlToDataTable(str);
-                // Now you can work with dataTable as needed
             }
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex.Message);
-                // Handle the exception or error logging
             }
 
             var usefull = MapDataTableToPlayerAttributes(dataTable);
@@ -132,45 +130,48 @@ namespace fmtest
             htmlDocument.LoadHtml(html);
             HtmlNode htmlNode = htmlDocument.DocumentNode.SelectSingleNode("//table");
 
-            if (htmlNode != null)
-            {
-                DataTable dataTable = new DataTable();
-
-                // Adding columns
-                var headerNodes = htmlNode.SelectNodes("tr/th");
-                if (headerNodes != null)
-                {
-                    foreach (HtmlNode column in headerNodes)
-                    {
-                        dataTable.Columns.Add(column.InnerText.Trim());
-                    }
-                }
-                else
-                {
-                    //exception
-                }
-
-                foreach (HtmlNode row in htmlNode.SelectNodes("tr[position()>1]"))
-                {
-                    DataRow dataRow = dataTable.NewRow();
-                    int columnIndex = 0;
-                    foreach (HtmlNode cell in row.SelectNodes("td"))
-                    {
-                        if (columnIndex < dataTable.Columns.Count)
-                        {
-                            dataRow[columnIndex] = cell.InnerText.Trim();
-                            columnIndex++;
-                        }
-                    }
-                    dataTable.Rows.Add(dataRow);
-                }
-
-                return dataTable;
-            }
-            else
+            if (htmlNode == null)
             {
                 throw new InvalidOperationException("No table found in HTML string.");
             }
+
+            DataTable dataTable = new DataTable();
+
+            // Adding columns
+            var headerNodes = htmlNode.SelectNodes("tr/th");
+            if (headerNodes == null)
+            {
+                throw new InvalidOperationException("No header found in the table.");
+            }
+
+            foreach (HtmlNode column in headerNodes)
+            {
+                dataTable.Columns.Add(column.InnerText.Trim());
+            }
+
+            var rows = htmlNode.SelectNodes("tr[position()>1]");
+            if (rows == null)
+            {
+                return dataTable;
+            }
+
+            foreach (HtmlNode row in rows)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                var cells = row.SelectNodes("td");
+                if (cells == null)
+                {
+                    continue;
+                }
+
+                for (int columnIndex = 0; columnIndex < cells.Count && columnIndex < dataTable.Columns.Count; columnIndex++)
+                {
+                    dataRow[columnIndex] = cells[columnIndex].InnerText.Trim();
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable;
         }
 
         public static List<PlayerAttributes> MapDataTableToPlayerAttributes(DataTable table)
