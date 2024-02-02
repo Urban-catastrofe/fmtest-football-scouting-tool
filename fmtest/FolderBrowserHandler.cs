@@ -1,7 +1,4 @@
-﻿// FolderBrowserHandler.cs
-// FolderBrowserHandler.cs
-using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.Win32;
 
 namespace fmtest
@@ -38,7 +35,7 @@ namespace fmtest
             }
             catch (Exception ex)
             {
-                // Handle exceptions if needed
+                
             }
         }
 
@@ -52,7 +49,7 @@ namespace fmtest
                 }
                 catch (Exception ex)
                 {
-                    // Handle exceptions if needed
+                    
                 }
             }
             return null;

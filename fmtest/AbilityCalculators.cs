@@ -377,16 +377,9 @@
 
         public int CalculateWonderkidPotential(PlayerAttributes pa)
         {
-            var potential = 0;
-            potential += CalculateBasePotential(pa);
-
-            return potential;
-        }
-
-        private int CalculateBasePotential(PlayerAttributes pa)
-        {
             int ageMultiplier = CalculateAgeMultiplier(pa.Age);
-            return (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;
+            int potential = (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;
+            return potential;
         }
 
         private int CalculateAgeMultiplier(int age)
@@ -399,16 +392,17 @@
             {
                 return maxMultiplier;
             }
-            else if (age > maxAge)
+            else if (age >= maxAge)
             {
                 return minMultiplier;
             }
             else
             {
-                double multiplierDeclineRate = (maxMultiplier - minMultiplier) / Math.Pow(maxAge - 15, 2);
-                return maxMultiplier - (int)(multiplierDeclineRate * Math.Pow(age - 15, 2));
+                double multiplierDeclineRate = (double)(maxMultiplier - minMultiplier) / Math.Pow(maxAge - 15, 2);
+                int ageDifference = age - 15;
+                int ageMultiplier = maxMultiplier - (int)(multiplierDeclineRate * ageDifference * ageDifference);
+                return ageMultiplier;
             }
         }
-
     }
 }
