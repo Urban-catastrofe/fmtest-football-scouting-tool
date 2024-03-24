@@ -69,9 +69,9 @@
         int CalculateWonderkidPotential(PlayerAttributes pa);
     }
 
-    class AbilityCalculators : IAbilityCalculators
+    class AbilityCalculators
     {
-        public int CalculateBpdOnDefend(PlayerAttributes pa)
+        public async Task<int> CalculateBpdOnDefend(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -120,7 +120,7 @@
             return ability;
         }
 
-        public int CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
+        public async Task<int> CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -171,7 +171,7 @@
             return ability;
         }
 
-        public int CalculateAdvancedForward(PlayerAttributes pa)
+        public async Task<int> CalculateAdvancedForward(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -203,7 +203,7 @@
             return ability;
         }
 
-        public int CalculateInsideForward(PlayerAttributes pa)
+        public async Task<int> CalculateInsideForward(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -235,7 +235,7 @@
             return ability;
         }
 
-        public int CalculateWingBackAttacking(PlayerAttributes pa)
+        public async Task<int> CalculateWingBackAttacking(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -270,7 +270,7 @@
             return ability;
         }
 
-        public int CalculateSweeperKeeper(PlayerAttributes pa)
+        public async Task<int> CalculateSweeperKeeper(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -307,7 +307,7 @@
             return ability;
         }
 
-        public int CalculateDeepLyingPlaymaker(PlayerAttributes pa)
+        public async Task<int> CalculateDeepLyingPlaymaker(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -345,7 +345,7 @@
             return ability;
         }
 
-        public int CalculateDefensiveMidfielder(PlayerAttributes pa)
+        public async Task<int> CalculateDefensiveMidfielder(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -375,7 +375,7 @@
             return ability;
         }
 
-        public int CalculateWonderkidPotential(PlayerAttributes pa)
+        public async Task<int> CalculateWonderkidPotential(PlayerAttributes pa)
         {
             int ageMultiplier = CalculateAgeMultiplier(pa.Age);
             int potential = (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;

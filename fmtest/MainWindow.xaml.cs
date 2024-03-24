@@ -1,172 +1,90 @@
-﻿using HtmlAgilityPack;
-using System.Collections.Concurrent;
+﻿
+using AngleSharp.Html.Parser;
 using System.Data;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Markup;
-
 
 namespace fmtest
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly FolderBrowserHandler folderBrowserHandler = new FolderBrowserHandler();
+        private readonly FolderBrowserHandler _folderBrowserHandler;
 
         public MainWindow()
         {
             InitializeComponent();
+            _folderBrowserHandler = new FolderBrowserHandler();
             LoadCachedDirectory();
         }
 
-
-        private void FindFileButton_Click(object sender, RoutedEventArgs e)
+        private async void FindFileButton_Click(object sender, RoutedEventArgs e)
         {
-            var filePath = GetPath();
-
-            if (!File.Exists(filePath))
+            string filePath = GetPath();
+            if (string.IsNullOrEmpty(filePath))
             {
-                Console.WriteLine("File not found.");
+                MessageBox.Show("File not found or invalid file path.");
                 return;
             }
 
-            string str = File.ReadAllText(filePath);
-
-            var dataTable = new DataTable();
-
             try
             {
-                dataTable = ParseHtmlToDataTable(str);
+                string html = await File.ReadAllTextAsync(filePath);
+                DataTable dataTable = await ParseHtmlToDataTableAsync(html);
+                List<PlayerAttributes> playerAttributes = MapDataTableToPlayerAttributes(dataTable);
+
+                await CalculatePlayerScoresAsync(playerAttributes);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                MessageBox.Show($"An error occurred: {ex.Message}");
             }
-
-            var usefull = MapDataTableToPlayerAttributes(dataTable);
-
-            var abilityCalculations = new AbilityCalculators();
-
-            var data = new ConcurrentBag<PlayerScores>();
-            var tasks = new List<Task>();
-
-            foreach (var player in usefull)
-            {
-                var task = Task.Run(() =>
-                {
-                    var playerScores = new PlayerScores
-                    {
-                        Inf = player.Inf,
-                        Name = player.Name,
-                        Age = player.Age,
-                        Position = player.Position,
-                        Nat = player.Nat,
-                        Club = player.Club,
-                        TransferValue = player.TransferValue,
-                        Wage = player.Wage,
-                        MinAP = player.MinAP,
-                        MinFeeRls = player.MinFeeRls,
-                        MinFeeRlsToForeignClubs = player.MinFeeRlsToForeignClubs,
-                        Personality = player.Personality,
-                        MediaHandling = player.MediaHandling,
-                        LeftFoot = player.LeftFoot,
-                        RightFoot = player.RightFoot,
-                        Height = player.Height,
-                        AdvancedForwardScore = abilityCalculations.CalculateAdvancedForward(player),
-                        BpdDefendScore = abilityCalculations.CalculateBpdOnDefend(player),
-                        InsideForwardScore = abilityCalculations.CalculateInsideForward(player),
-                        SegundoVolanteScore = abilityCalculations.CalculateSegundoVolanteOnSupport(player),
-                        WingBackAttacking = abilityCalculations.CalculateWingBackAttacking(player),
-                        SweeperKeeper = abilityCalculations.CalculateSweeperKeeper(player),
-                        DeepLyingPlaymaker = abilityCalculations.CalculateDeepLyingPlaymaker(player),
-                        WonderkidScore = abilityCalculations.CalculateWonderkidPotential(player),
-                        DefensiveMidfielder = abilityCalculations.CalculateDefensiveMidfielder(player)
-                    };
-
-                    data.Add(playerScores);
-                });
-
-                tasks.Add(task);
-            }
-
-            Task.WaitAll(tasks.ToArray());
-
-            PlayerDataGrid.ItemsSource = data;
         }
 
-        /// <summary>
-        /// Gets the selected folder path from the text box.
-        /// </summary>
-        /// <returns>The selected folder path.</returns>
-        public string GetPath()
+        private string GetPath()
         {
             string folderPath = txtSelectedFolder.Text;
-
             if (!Directory.Exists(folderPath))
             {
-                Console.WriteLine("Folder does not exist.");
-                return "";
+                return string.Empty;
             }
 
-            var files = Directory.GetFiles(folderPath);
-
+            string[] files = Directory.GetFiles(folderPath);
             if (files.Length == 0)
             {
-                Console.WriteLine("No files found in the folder.");
-                return "";
+                return string.Empty;
             }
 
-            var mostRecentFile = files.OrderByDescending(f => File.GetCreationTime(f)).FirstOrDefault();
-            Console.WriteLine("Most recent file: " + mostRecentFile);
+            string mostRecentFile = files.OrderByDescending(File.GetCreationTime).FirstOrDefault();
             return mostRecentFile;
         }
 
-        public static DataTable ParseHtmlToDataTable(string html)
+        private async Task<DataTable> ParseHtmlToDataTableAsync(string html)
         {
-            HtmlDocument htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(html);
-            HtmlNode htmlNode = htmlDocument.DocumentNode.SelectSingleNode("//table");
+            var parser = new HtmlParser();
+            var document = await parser.ParseDocumentAsync(html);
+            var tableElement = document.QuerySelector("table");
 
-            if (htmlNode == null)
+            if (tableElement == null)
             {
                 throw new InvalidOperationException("No table found in HTML string.");
             }
 
-            DataTable dataTable = new DataTable();
+            var dataTable = new DataTable();
 
-            // Adding columns
-            var headerNodes = htmlNode.SelectNodes("tr/th");
-            if (headerNodes == null)
+            var headerRow = tableElement.QuerySelector("tr");
+            foreach (var headerCell in headerRow.QuerySelectorAll("th"))
             {
-                throw new InvalidOperationException("No header found in the table.");
+                dataTable.Columns.Add(headerCell.TextContent.Trim());
             }
 
-            foreach (HtmlNode column in headerNodes)
+            var dataRows = tableElement.QuerySelectorAll("tr:not(:first-child)");
+            foreach (var row in dataRows)
             {
-                dataTable.Columns.Add(column.InnerText.Trim());
-            }
-
-            var rows = htmlNode.SelectNodes("tr[position()>1]");
-            if (rows == null)
-            {
-                return dataTable;
-            }
-
-            foreach (HtmlNode row in rows)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                var cells = row.SelectNodes("td");
-                if (cells == null)
+                var dataRow = dataTable.NewRow();
+                var cells = row.QuerySelectorAll("td");
+                for (int i = 0; i < cells.Length && i < dataTable.Columns.Count; i++)
                 {
-                    continue;
-                }
-
-                for (int columnIndex = 0; columnIndex < cells.Count && columnIndex < dataTable.Columns.Count; columnIndex++)
-                {
-                    dataRow[columnIndex] = cells[columnIndex].InnerText.Trim();
+                    dataRow[i] = cells[i].TextContent.Trim();
                 }
                 dataTable.Rows.Add(dataRow);
             }
@@ -174,93 +92,115 @@ namespace fmtest
             return dataTable;
         }
 
-        public static List<PlayerAttributes> MapDataTableToPlayerAttributes(DataTable table)
+        private List<PlayerAttributes> MapDataTableToPlayerAttributes(DataTable dataTable)
         {
-            var players = new ConcurrentBag<PlayerAttributes>();
-
-            var tasks = new List<Task>();
-
-            foreach (DataRow row in table.Rows)
-            {
-                var task = Task.Run(() =>
+            return dataTable.AsEnumerable()
+                .Where(row => !string.IsNullOrEmpty(row.Field<string>("Name")))
+                .Select(row => new PlayerAttributes
                 {
-                    if (!(row == null || row["Name"].ToString() == ""))
-                    {
-                        var player = new PlayerAttributes
-                        {
-                            Inf = row["Inf"].ToString() ?? string.Empty,
-                            Name = row["Name"].ToString() ?? string.Empty,
-                            Position = row["Position"].ToString() ?? string.Empty,
-                            Nat = row["Nat"].ToString() ?? string.Empty,
-                            Age = Convert.ToInt32(row["Age"]),
-                            Club = row["Club"].ToString() ?? string.Empty,
-                            TransferValue = row["Transfer Value"].ToString() ?? string.Empty,
-                            Wage = row["Wage"].ToString() ?? string.Empty,
-                            MinAP = row["Min AP"].ToString() ?? string.Empty,
-                            MinFeeRls = row["Min Fee Rls"].ToString() ?? string.Empty,
-                            MinFeeRlsToForeignClubs = row["Min Fee Rls to Foreign Clubs"].ToString() ?? string.Empty,
-                            Personality = row["Personality"].ToString() ?? string.Empty,
-                            MediaHandling = row["Media Handling"].ToString() ?? string.Empty,
-                            LeftFoot = row["Left Foot"].ToString() ?? string.Empty,
-                            RightFoot = row["Right Foot"].ToString() ?? string.Empty,
-                            OneVOne = Convert.ToInt32(row["1v1"]),
-                            Acc = Convert.ToInt32(row["Acc"]),
-                            Aer = Convert.ToInt32(row["Aer"]),
-                            Agg = Convert.ToInt32(row["Agg"]),
-                            Agi = Convert.ToInt32(row["Agi"]),
-                            Ant = Convert.ToInt32(row["Ant"]),
-                            Bal = Convert.ToInt32(row["Bal"]),
-                            Bra = Convert.ToInt32(row["Bra"]),
-                            Cmd = Convert.ToInt32(row["Cmd"]),
-                            Cnt = Convert.ToInt32(row["Cnt"]),
-                            Cmp = Convert.ToInt32(row["Cmp"]),
-                            Cro = Convert.ToInt32(row["Cro"]),
-                            Dec = Convert.ToInt32(row["Dec"]),
-                            Det = Convert.ToInt32(row["Det"]),
-                            Dri = Convert.ToInt32(row["Dri"]),
-                            Fin = Convert.ToInt32(row["Fin"]),
-                            Fir = Convert.ToInt32(row["Fir"]),
-                            Fla = Convert.ToInt32(row["Fla"]),
-                            Han = Convert.ToInt32(row["Han"]),
-                            Hea = Convert.ToInt32(row["Hea"]),
-                            Jum = Convert.ToInt32(row["Jum"]),
-                            Kic = Convert.ToInt32(row["Kic"]),
-                            Ldr = Convert.ToInt32(row["Ldr"]),
-                            Lon = Convert.ToInt32(row["Lon"]),
-                            Mar = Convert.ToInt32(row["Mar"]),
-                            OtB = Convert.ToInt32(row["OtB"]),
-                            Pac = Convert.ToInt32(row["Pac"]),
-                            Pas = Convert.ToInt32(row["Pas"]),
-                            Pos = Convert.ToInt32(row["Pos"]),
-                            Ref = Convert.ToInt32(row["Ref"]),
-                            Sta = Convert.ToInt32(row["Sta"]),
-                            Str = Convert.ToInt32(row["Str"]),
-                            Tck = Convert.ToInt32(row["Tck"]),
-                            Tea = Convert.ToInt32(row["Tea"]),
-                            Tec = Convert.ToInt32(row["Tec"]),
-                            Thr = Convert.ToInt32(row["Thr"]),
-                            TRO = Convert.ToInt32(row["TRO"]),
-                            Vis = Convert.ToInt32(row["Vis"]),
-                            Wor = Convert.ToInt32(row["Wor"]),
-                            Cor = Convert.ToInt32(row["Cor"]),
-                            Height = row["Height"].ToString() ?? string.Empty
-                        };
+                    Inf = row.Field<string>("Inf"),
+                    Name = row.Field<string>("Name"),
+                    Position = row.Field<string>("Position"),
+                    Nat = row.Field<string>("Nat"),
+                    Age = Convert.ToInt32(row.Field<string>("Age")),
+                    Club = row.Field<string>("Club"),
+                    TransferValue = row.Field<string>("Transfer Value"),
+                    Wage = row.Field<string>("Wage"),
+                    MinAP = row.Field<string>("Min AP"),
+                    MinFeeRls = row.Field<string>("Min Fee Rls"),
+                    MinFeeRlsToForeignClubs = row.Field<string>("Min Fee Rls to Foreign Clubs"),
+                    Personality = row.Field<string>("Personality"),
+                    MediaHandling = row.Field<string>("Media Handling"),
+                    LeftFoot = row.Field<string>("Left Foot"),
+                    RightFoot = row.Field<string>("Right Foot"),
+                    OneVOne = Convert.ToInt32(row.Field<string>("1v1")),
+                    Acc = Convert.ToInt32(row.Field<string>("Acc")),
+                    Aer = Convert.ToInt32(row.Field<string>("Aer")),
+                    Agg = Convert.ToInt32(row.Field<string>("Agg")),
+                    Agi = Convert.ToInt32(row.Field<string>("Agi")),
+                    Ant = Convert.ToInt32(row.Field<string>("Ant")),
+                    Bal = Convert.ToInt32(row.Field<string>("Bal")),
+                    Bra = Convert.ToInt32(row.Field<string>("Bra")),
+                    Cmd = Convert.ToInt32(row.Field<string>("Cmd")),
+                    Cnt = Convert.ToInt32(row.Field<string>("Cnt")),
+                    Cmp = Convert.ToInt32(row.Field<string>("Cmp")),
+                    Cro = Convert.ToInt32(row.Field<string>("Cro")),
+                    Dec = Convert.ToInt32(row.Field<string>("Dec")),
+                    Det = Convert.ToInt32(row.Field<string>("Det")),
+                    Dri = Convert.ToInt32(row.Field<string>("Dri")),
+                    Fin = Convert.ToInt32(row.Field<string>("Fin")),
+                    Fir = Convert.ToInt32(row.Field<string>("Fir")),
+                    Fla = Convert.ToInt32(row.Field<string>("Fla")),
+                    Han = Convert.ToInt32(row.Field<string>("Han")),
+                    Hea = Convert.ToInt32(row.Field<string>("Hea")),
+                    Jum = Convert.ToInt32(row.Field<string>("Jum")),
+                    Kic = Convert.ToInt32(row.Field<string>("Kic")),
+                    Ldr = Convert.ToInt32(row.Field<string>("Ldr")),
+                    Lon = Convert.ToInt32(row.Field<string>("Lon")),
+                    Mar = Convert.ToInt32(row.Field<string>("Mar")),
+                    OtB = Convert.ToInt32(row.Field<string>("OtB")),
+                    Pac = Convert.ToInt32(row.Field<string>("Pac")),
+                    Pas = Convert.ToInt32(row.Field<string>("Pas")),
+                    Pos = Convert.ToInt32(row.Field<string>("Pos")),
+                    Ref = Convert.ToInt32(row.Field<string>("Ref")),
+                    Sta = Convert.ToInt32(row.Field<string>("Sta")),
+                    Str = Convert.ToInt32(row.Field<string>("Str")),
+                    Tck = Convert.ToInt32(row.Field<string>("Tck")),
+                    Tea = Convert.ToInt32(row.Field<string>("Tea")),
+                    Tec = Convert.ToInt32(row.Field<string>("Tec")),
+                    Thr = Convert.ToInt32(row.Field<string>("Thr")),
+                    TRO = Convert.ToInt32(row.Field<string>("TRO")),
+                    Vis = Convert.ToInt32(row.Field<string>("Vis")),
+                    Wor = Convert.ToInt32(row.Field<string>("Wor")),
+                    Cor = Convert.ToInt32(row.Field<string>("Cor")),
+                    Height = row.Field<string>("Height")
+                })
+                .ToList();
+        }
 
-                        players.Add(player);
-                    }
-                });
+        private async Task CalculatePlayerScoresAsync(List<PlayerAttributes> playerAttributes)
+        {
+            var abilityCalculations = new AbilityCalculators();
 
-                tasks.Add(task);
-            }
+            var playerScores = await Task.WhenAll(playerAttributes.Select(async player =>
+            {
+                var scores = new PlayerScores
+                {
+                    Inf = player.Inf,
+                    Name = player.Name,
+                    Age = player.Age,
+                    Position = player.Position,
+                    Nat = player.Nat,
+                    Club = player.Club,
+                    TransferValue = player.TransferValue,
+                    Wage = player.Wage,
+                    MinAP = player.MinAP,
+                    MinFeeRls = player.MinFeeRls,
+                    MinFeeRlsToForeignClubs = player.MinFeeRlsToForeignClubs,
+                    Personality = player.Personality,
+                    MediaHandling = player.MediaHandling,
+                    LeftFoot = player.LeftFoot,
+                    RightFoot = player.RightFoot,
+                    Height = player.Height,
+                    AdvancedForwardScore = await abilityCalculations.CalculateAdvancedForward(player),
+                    BpdDefendScore = await abilityCalculations.CalculateBpdOnDefend(player),
+                    InsideForwardScore = await abilityCalculations.CalculateInsideForward(player),
+                    SegundoVolanteScore = await abilityCalculations.CalculateSegundoVolanteOnSupport(player),
+                    WingBackAttacking = await abilityCalculations.CalculateWingBackAttacking(player),
+                    SweeperKeeper = await abilityCalculations.CalculateSweeperKeeper(player),
+                    DeepLyingPlaymaker = await   abilityCalculations.CalculateDeepLyingPlaymaker(player),
+                    WonderkidScore = await abilityCalculations.CalculateWonderkidPotential(player),
+                    DefensiveMidfielder = await abilityCalculations.CalculateDefensiveMidfielder(player)
+                };
+                return scores;
+            }));
 
-            Task.WaitAll(tasks.ToArray());
-
-            return players.ToList();
+            PlayerDataGrid.ItemsSource = playerScores;
         }
 
         private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
         {
-            string selectedPath = folderBrowserHandler.OpenFolderBrowserDialog();
+            string selectedPath = _folderBrowserHandler.OpenFolderBrowserDialog();
             if (!string.IsNullOrEmpty(selectedPath))
             {
                 txtSelectedFolder.Text = selectedPath;
@@ -269,7 +209,7 @@ namespace fmtest
 
         private void LoadCachedDirectory()
         {
-            string cachedPath = folderBrowserHandler.GetCachedDirectory();
+            string cachedPath = _folderBrowserHandler.GetCachedDirectory();
             if (!string.IsNullOrEmpty(cachedPath))
             {
                 txtSelectedFolder.Text = cachedPath;
