@@ -76,14 +76,17 @@
             var ability = 0;
 
             // Weights are hypothetical and can be adjusted based on your game analysis
-            int weightHeading = 2;
+            int weightHeading = 3;
             int weightMarking = 3;
-            int weightPassing = 1;
+            int weightPassing = 2;
             int weightTackling = 3;
             int weightComposure = 2;
             int weightPositioning = 3;
             int weightJumpingReach = 2;
             int weightStrength = 2;
+            int weightAcceleration = 2;
+            int weightAgility = 2;
+            int weightBalance = 2;
 
             // Desirable traits, weighted less as they are not key but still important.
             int weightFirstTouch = 1;
@@ -95,6 +98,10 @@
             int weightDecisions = 2;
             int weightVision = 1;
             int weightPace = 1;
+            int weightStamina = 2;
+            int weightWorkRate = 2;
+            int weightDetermination = 2;
+            int weightLeadership = 1;
 
             // Calculate ability score
             ability += pa.Hea * weightHeading;
@@ -105,6 +112,9 @@
             ability += pa.Pos * weightPositioning;
             ability += pa.Jum * weightJumpingReach;
             ability += pa.Str * weightStrength;
+            ability += pa.Acc * weightAcceleration;
+            ability += pa.Agi * weightAgility;
+            ability += pa.Bal * weightBalance;
 
             // Add desirable traits
             ability += pa.Fir * weightFirstTouch;
@@ -116,8 +126,21 @@
             ability += pa.Dec * weightDecisions;
             ability += pa.Vis * weightVision;
             ability += pa.Pac * weightPace;
+            ability += pa.Sta * weightStamina;
+            ability += pa.Wor * weightWorkRate;
+            ability += pa.Det * weightDetermination;
+            ability += pa.Lea * weightLeadership;
 
-            return ability;
+            // Normalize the ability score to a 0-100 range
+            int maxScore = 20 * (weightHeading + weightMarking + weightPassing + weightTackling +
+                                 weightComposure + weightPositioning + weightJumpingReach + weightStrength +
+                                 weightAcceleration + weightAgility + weightBalance + weightFirstTouch +
+                                 weightTechnique + weightAggression + weightAnticipation + weightBravery +
+                                 weightConcentration + weightDecisions + weightVision + weightPace +
+                                 weightStamina + weightWorkRate + weightDetermination + weightLeadership);
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            return normalizedAbility;
         }
 
         public async Task<int> CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
@@ -205,12 +228,12 @@
 
         public async Task<int> CalculateInsideForward(PlayerAttributes pa)
         {
-            var ability = 0;
+            int ability = 0;
 
-            // Assign weights for key (green) and desirable (blue) attributes.
-            // Key attributes are given a higher weight.
+            // Assign weights for key (green), desirable (blue), and additional (yellow) attributes.
             int weightKey = 3;
             int weightDesirable = 2;
+            int weightAdditional = 1;
 
             // Key Attributes (Green)
             ability += pa.Dri * weightKey; // Dribbling
@@ -220,30 +243,47 @@
             ability += pa.Tec * weightKey; // Technique
             ability += pa.Acc * weightKey; // Acceleration
             ability += pa.Agi * weightKey; // Agility
+            ability += pa.OtB * weightKey; // Off the Ball
+            ability += pa.Ant * weightKey; // Anticipation
 
             // Desirable Attributes (Blue)
             ability += pa.Cro * weightDesirable; // Crossing
             ability += pa.Lon * weightDesirable; // Long Shots
-            ability += pa.OtB * weightDesirable; // Off the Ball
             ability += pa.Cmp * weightDesirable; // Composure
             ability += pa.Dec * weightDesirable; // Decisions
             ability += pa.Vis * weightDesirable; // Vision
             ability += pa.Wor * weightDesirable; // Work Rate
             ability += pa.Pac * weightDesirable; // Pace
             ability += pa.Sta * weightDesirable; // Stamina
+            ability += pa.Bal * weightDesirable; // Balance
+            ability += pa.Fla * weightDesirable; // Flair
 
-            return ability;
+            // Additional Attributes (Yellow)
+            ability += pa.Str * weightAdditional; // Strength
+            ability += pa.Jum * weightAdditional; // Jumping Reach
+            //ability += pa. * weightAdditional; // Natural Fitness
+            ability += pa.Agg * weightAdditional; // Aggression
+            ability += pa.Bra * weightAdditional; // Bravery
+
+            // Normalize the ability score to a 0-100 range
+            int maxScore = (10 * weightKey) + (10 * weightDesirable) + (5 * weightAdditional);
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            return normalizedAbility;
         }
 
         public async Task<int> CalculateWingBackAttacking(PlayerAttributes pa)
         {
-            var ability = 0;
+            int ability = 0;
 
             // Weights for key attributes, higher because they are essential for the role.
             int weightKey = 3;
 
             // Weights for desirable attributes, lower but still significant.
             int weightDesirable = 2;
+
+            // Weights for additional attributes, adding more depth to the evaluation.
+            int weightAdditional = 1;
 
             // Key attributes
             ability += pa.Mar * weightKey; // Marking
@@ -254,10 +294,10 @@
             ability += pa.Wor * weightKey; // Work Rate
             ability += pa.Acc * weightKey; // Acceleration
             ability += pa.Sta * weightKey; // Stamina
+            ability += pa.Cro * weightKey; // Crossing
+            ability += pa.Dri * weightKey; // Dribbling
 
             // Desirable attributes
-            ability += pa.Cro * weightDesirable; // Crossing
-            ability += pa.Dri * weightDesirable; // Dribbling
             ability += pa.Fir * weightDesirable; // First Touch
             ability += pa.Pas * weightDesirable; // Passing
             ability += pa.Tec * weightDesirable; // Technique
@@ -266,8 +306,21 @@
             ability += pa.OtB * weightDesirable; // Off the Ball
             ability += pa.Agi * weightDesirable; // Agility
             ability += pa.Pac * weightDesirable; // Pace
+            ability += pa.Str * weightDesirable; // Strength
+            ability += pa.Bal * weightDesirable; // Balance
 
-            return ability;
+            // Additional attributes
+            ability += pa.Jum * weightAdditional; // Jumping Reach
+            ability += pa.Hea * weightAdditional; // Heading
+            ability += pa.Lon * weightAdditional; // Long Shots
+            ability += pa.Vis * weightAdditional; // Vision
+            //ability += pa.Pen * weightAdditional; // Penalty Taking
+
+            // Normalize the ability score to a 0-100 range
+            int maxScore = (10 * weightKey) + (10 * weightDesirable) + (5 * weightAdditional);
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            return normalizedAbility;
         }
 
         public async Task<int> CalculateSweeperKeeper(PlayerAttributes pa)
@@ -378,8 +431,42 @@
         public async Task<int> CalculateWonderkidPotential(PlayerAttributes pa)
         {
             int ageMultiplier = CalculateAgeMultiplier(pa.Age);
-            int potential = (pa.Wor + pa.Det + pa.Sta + pa.Pac + pa.Acc) * ageMultiplier;
-            return potential;
+
+            int potential = 0;
+
+            // Define weights for each attribute based on the player's position
+            int worWeight = GetAttributeWeight(pa.Position, "Wor");
+            int detWeight = GetAttributeWeight(pa.Position, "Det");
+            int staWeight = GetAttributeWeight(pa.Position, "Sta");
+            int pacWeight = GetAttributeWeight(pa.Position, "Pac");
+            int accWeight = GetAttributeWeight(pa.Position, "Acc");
+            int tecWeight = GetAttributeWeight(pa.Position, "Tec");
+            int decWeight = GetAttributeWeight(pa.Position, "Dec");
+            int antWeight = GetAttributeWeight(pa.Position, "Ant");
+            int flaWeight = GetAttributeWeight(pa.Position, "Fla");
+            int natWeight = GetAttributeWeight(pa.Position, "Nat");
+
+            // Calculate the weighted sum of attributes
+            potential += pa.Wor * worWeight;
+            potential += pa.Det * detWeight;
+            potential += pa.Sta * staWeight;
+            potential += pa.Pac * pacWeight;
+            potential += pa.Acc * accWeight;
+            potential += pa.Tec * tecWeight;
+            potential += pa.Dec * decWeight;
+            potential += pa.Ant * antWeight;
+            potential += pa.Fla * flaWeight;
+            //potential += pa.Nat * natWeight;
+
+            // Apply the age multiplier
+            potential *= ageMultiplier;
+
+            // Normalize the potential score to a range of 0-100
+            int maxPotential = (20 * (worWeight + detWeight + staWeight + pacWeight + accWeight +
+                                       tecWeight + decWeight + antWeight + flaWeight + natWeight)) * 5;
+            int normalizedPotential = (int)((double)potential / maxPotential * 100);
+
+            return normalizedPotential;
         }
 
         private int CalculateAgeMultiplier(int age)
@@ -398,10 +485,75 @@
             }
             else
             {
-                double multiplierDeclineRate = (double)(maxMultiplier - minMultiplier) / Math.Pow(maxAge - 15, 2);
+                double multiplierDeclineRate = (double)(maxMultiplier - minMultiplier) / (maxAge - 15);
                 int ageDifference = age - 15;
-                int ageMultiplier = maxMultiplier - (int)(multiplierDeclineRate * ageDifference * ageDifference);
+                int ageMultiplier = maxMultiplier - (int)(multiplierDeclineRate * ageDifference);
                 return ageMultiplier;
+            }
+        }
+
+        private int GetAttributeWeight(string position, string attribute)
+        {
+            // Define the attribute weights for each position
+            // You can adjust these weights based on your game's requirements
+            switch (position)
+            {
+                case "S":
+                case "AM":
+                case "AM (R)":
+                case "AM (L)":
+                    switch (attribute)
+                    {
+                        case "Wor": return 3;
+                        case "Det": return 2;
+                        case "Sta": return 2;
+                        case "Pac": return 3;
+                        case "Acc": return 3;
+                        case "Tec": return 3;
+                        case "Dec": return 2;
+                        case "Ant": return 2;
+                        case "Fla": return 2;
+                        case "Nat": return 1;
+                        default: return 1;
+                    }
+                case "M":
+                case "M (R)":
+                case "M (L)":
+                case "DM":
+                    switch (attribute)
+                    {
+                        case "Wor": return 3;
+                        case "Det": return 2;
+                        case "Sta": return 3;
+                        case "Pac": return 2;
+                        case "Acc": return 2;
+                        case "Tec": return 3;
+                        case "Dec": return 3;
+                        case "Ant": return 2;
+                        case "Fla": return 2;
+                        case "Nat": return 1;
+                        default: return 1;
+                    }
+                case "D":
+                case "D (C)":
+                case "D (R)":
+                case "D (L)":
+                    switch (attribute)
+                    {
+                        case "Wor": return 2;
+                        case "Det": return 3;
+                        case "Sta": return 2;
+                        case "Pac": return 2;
+                        case "Acc": return 1;
+                        case "Tec": return 2;
+                        case "Dec": return 3;
+                        case "Ant": return 3;
+                        case "Fla": return 1;
+                        case "Nat": return 1;
+                        default: return 1;
+                    }
+                default:
+                    return 1;
             }
         }
     }
