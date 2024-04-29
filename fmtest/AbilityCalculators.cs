@@ -129,7 +129,7 @@
             ability += pa.Sta * weightStamina;
             ability += pa.Wor * weightWorkRate;
             ability += pa.Det * weightDetermination;
-            ability += pa.Lea * weightLeadership;
+            //ability += pa.Lea * weightLeadership;
 
             // Normalize the ability score to a 0-100 range
             int maxScore = 20 * (weightHeading + weightMarking + weightPassing + weightTackling +
