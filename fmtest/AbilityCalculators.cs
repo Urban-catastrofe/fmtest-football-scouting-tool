@@ -131,16 +131,18 @@
             ability += pa.Det * weightDetermination;
             //ability += pa.Lea * weightLeadership;
 
-            // Normalize the ability score to a 0-100 range
-            int maxScore = 20 * (weightHeading + weightMarking + weightPassing + weightTackling +
-                                 weightComposure + weightPositioning + weightJumpingReach + weightStrength +
-                                 weightAcceleration + weightAgility + weightBalance + weightFirstTouch +
-                                 weightTechnique + weightAggression + weightAnticipation + weightBravery +
-                                 weightConcentration + weightDecisions + weightVision + weightPace +
-                                 weightStamina + weightWorkRate + weightDetermination + weightLeadership);
-            int normalizedAbility = (int)((double)ability / maxScore * 100);
+            return ability;
 
-            return normalizedAbility;
+            ////Normalize the ability score to a 0 - 100 range
+            //int maxScore = 20 * (weightHeading + weightMarking + weightPassing + weightTackling +
+            //                     weightComposure + weightPositioning + weightJumpingReach + weightStrength +
+            //                     weightAcceleration + weightAgility + weightBalance + weightFirstTouch +
+            //                     weightTechnique + weightAggression + weightAnticipation + weightBravery +
+            //                     weightConcentration + weightDecisions + weightVision + weightPace +
+            //                     weightStamina + weightWorkRate + weightDetermination + weightLeadership);
+            //int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            //return normalizedAbility;
         }
 
         public async Task<int> CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
@@ -208,22 +210,35 @@
 
             // Tier 1
             ability += pa.OtB * weightTier1; // Off The Ball
-            ability += pa.Cmp * weightTier1; // Composure
+            ability += pa.Ant * weightTier1; // Anticipation
             ability += pa.Acc * weightTier1; // Acceleration
             ability += pa.Pac * weightTier1; // Pace
+            ability += pa.Wor * weightTier1; // Work Rate
+            ability += pa.Agi * weightTier1; // Agility
 
             // Tier 2
             ability += pa.Dri * weightTier2; // Dribbling
-            ability += pa.Ant * weightTier2; // Anticipation
             ability += pa.Fir * weightTier2; // First Touch
+            ability += pa.Tec * weightTier2; // Technique
+            ability += pa.Bal * weightTier2; // Balance
+            ability += pa.Sta * weightTier2; // Stamina
+            ability += pa.Str * weightTier2; // Strength
 
             // Tier 3
             ability += pa.Fin * weightTier3; // Finishing
-            ability += pa.Agi * weightTier3; // Agility
-            ability += pa.Tec * weightTier3; // Technique
+            ability += pa.Cmp * weightTier3; // Composure
             ability += pa.Dec * weightTier3; // Decisions
+            ability += pa.Vis * weightTier3; // Vision
+            ability += pa.Lon * weightTier3; // Long Shots
+            //ability += pa.Pen * weightTier3; // Penalty Taking
 
-            return ability;
+            // Calculate the maximum possible score based on the weights and number of attributes
+            int maxScore = (6 * weightTier1) + (6 * weightTier2) + (6 * weightTier3);
+
+            // Normalize the ability score to a 0-100 range
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            return normalizedAbility;
         }
 
         public async Task<int> CalculateInsideForward(PlayerAttributes pa)
@@ -327,10 +342,10 @@
         {
             var ability = 0;
 
-            // Weights for key attributes, higher because they are essential for the role.
+            // Weights for key attributes
             int weightKey = 3;
 
-            // Weights for desirable attributes, lower but still significant.
+            // Weights for desirable attributes
             int weightDesirable = 2;
 
             // Key attributes for a sweeper keeper
@@ -338,26 +353,62 @@
             ability += pa.OneVOne * weightKey; // One On Ones
             ability += pa.TRO * weightKey; // Rushing Out
             ability += pa.Pas * weightKey; // Passing
+            ability += pa.Vis * weightKey; // Vision
             ability += pa.Ant * weightKey; // Anticipation
             ability += pa.Cmd * weightKey; // Communication
             ability += pa.Kic * weightKey; // Kicking
+            ability += pa.Thr * weightKey; // Throwing
 
             // Desirable attributes for a sweeper keeper
             ability += pa.Acc * weightDesirable; // Acceleration
             ability += pa.Agi * weightDesirable; // Agility
             ability += pa.Jum * weightDesirable; // Jumping Reach
+            ability += pa.Dec * weightDesirable; // Decisions
+            ability += pa.Cnt * weightDesirable; // Concentration
+            ability += pa.Cmp * weightDesirable; // Composure
+            ability += pa.Fir * weightDesirable; // First Touch
+            ability += pa.Tec * weightDesirable; // Technique
+
+            // Normalize the ability score to a 0-100 range
+            int maxScore = (9 * weightKey) + (8 * weightDesirable);
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            return normalizedAbility;
+        }
+
+        public async Task<int> CalculateShotStopper(PlayerAttributes pa)
+        {
+            var ability = 0;
+
+            // Weights for key attributes
+            int weightKey = 3;
+
+            // Weights for desirable attributes
+            int weightDesirable = 2;
+
+            // Key attributes for a shot stopper
+            ability += pa.Ref * weightKey; // Reflexes
+            ability += pa.Han * weightKey; // Handling
+            ability += pa.OneVOne * weightKey; // One On Ones
+            ability += pa.Aer * weightKey; // Aerial Ability
+            ability += pa.Cmd * weightKey; // Communication
+            ability += pa.Ant * weightKey; // Anticipation
+            ability += pa.Pos * weightKey; // Positioning
+
+            // Desirable attributes for a shot stopper
+            ability += pa.Jum * weightDesirable; // Jumping Reach
+            ability += pa.TRO * weightDesirable; // Rushing Out
+            ability += pa.Kic * weightDesirable; // Kicking
             ability += pa.Thr * weightDesirable; // Throwing
+            ability += pa.Cnt * weightDesirable; // Concentration
+            ability += pa.Dec * weightDesirable; // Decisions
+            ability += pa.Wor * weightDesirable; // Work Rate
 
-            // These attributes could be considered either desirable or additional, with lower weights
-            int weightAdditional = 1;
-            ability += pa.Tec * weightAdditional; // Technique
-            ability += pa.Fir * weightAdditional; // First Touch
-            ability += pa.Cnt * weightAdditional; // Concentration
-            ability += pa.Dec * weightAdditional; // Decisions
-            ability += pa.Pos * weightAdditional; // Positioning
-            ability += pa.Wor * weightAdditional; // Work Rate
+            // Normalize the ability score to a 0-100 range
+            int maxScore = (7 * weightKey) + (7 * weightDesirable);
+            int normalizedAbility = (int)((double)ability / maxScore * 100);
 
-            return ability;
+            return normalizedAbility;
         }
 
         public async Task<int> CalculateDeepLyingPlaymaker(PlayerAttributes pa)
@@ -430,7 +481,8 @@
 
         public async Task<int> CalculateWonderkidPotential(PlayerAttributes pa)
         {
-            int ageMultiplier = CalculateAgeMultiplier(pa.Age);
+            double ageMultiplier = CalculateAgeMultiplier(pa.Age);
+            double personalityMultiplier = (int)GetPersonalityMultiplier(pa.Personality);
 
             int potential = 0;
 
@@ -459,38 +511,99 @@
             //potential += pa.Nat * natWeight;
 
             // Apply the age multiplier
-            potential *= ageMultiplier;
+            potential = (int)(potential * ageMultiplier * personalityMultiplier);
 
-            // Normalize the potential score to a range of 0-100
-            int maxPotential = (20 * (worWeight + detWeight + staWeight + pacWeight + accWeight +
-                                       tecWeight + decWeight + antWeight + flaWeight + natWeight)) * 5;
-            int normalizedPotential = (int)((double)potential / maxPotential * 100);
+            return potential;
 
-            return normalizedPotential;
+            //// Normalize the potential score to a range of 0-100
+            //int maxPotential = (20 * (worWeight + detWeight + staWeight + pacWeight + accWeight +
+            //                           tecWeight + decWeight + antWeight + flaWeight + natWeight)) * 5;
+            //int normalizedPotential = (int)((double)potential / maxPotential * 100);
+
+            //return normalizedPotential;
         }
 
-        private int CalculateAgeMultiplier(int age)
+        private double CalculateAgeMultiplier(int age)
         {
-            int maxAge = 21;
-            int minMultiplier = 1;
-            int maxMultiplier = 5;
+            double baseMultiplier = 1.0;
+            double ageMultiplier = 1.0;
 
-            if (age <= 15)
+            if (age >= 15 && age <= 20)
             {
-                return maxMultiplier;
+                ageMultiplier = Math.Pow(1.1, 20 - age);
             }
-            else if (age >= maxAge)
+
+            return (int)(baseMultiplier * ageMultiplier);
+        }
+        private double GetPersonalityMultiplier(string personality)
+        {
+            switch (personality)
             {
-                return minMultiplier;
-            }
-            else
-            {
-                double multiplierDeclineRate = (double)(maxMultiplier - minMultiplier) / (maxAge - 15);
-                int ageDifference = age - 15;
-                int ageMultiplier = maxMultiplier - (int)(multiplierDeclineRate * ageDifference);
-                return ageMultiplier;
+                case "Model Citizen":
+                    return 1.2;
+                case "Perfectionist":
+                    return 1.15;
+                case "Model Professional":
+                    return 1.15;
+                case "Ambitious":
+                    return 1.05;
+                case "Professional":
+                    return 1.1;
+                case "Resolute":
+                    return 1.15;
+                case "Fairly Professional":
+                    return 1.05;
+                case "Leader":
+                    return 1.05;
+                case "Iron Willed":
+                    return 1.05;
+                case "Determined":
+                    return 1.05;
+                case "Driven":
+                    return 1.05;
+                case "Resilient":
+                    return 1.05;
+                case "Charismatic":
+                    return 1.0;
+                case "Loyal":
+                    return 1.0;
+                case "Composed":
+                    return 1.0;
+                case "Honest":
+                    return 1.0;
+                case "Fairly Ambitious":
+                    return 1.0;
+                case "Spirited":
+                    return 1.05;
+                case "Fairly Sporting":
+                    return 0.95;
+                case "Sporting":
+                    return 0.95;
+                case "Temperamental":
+                    return 0.9;
+                case "Fickle":
+                    return 0.9;
+                case "Slack":
+                    return 0.85;
+                case "Low Determination":
+                    return 0.85;
+                case "Low Self-Belief":
+                    return 0.85;
+                case "Casual":
+                    return 0.85;
+                case "Easily Discouraged":
+                    return 0.8;
+                case "Spineless":
+                    return 0.8;
+                case "Unambitious":
+                    return 0.8;
+                case "Low Professionalism":
+                    return 0.8;
+                default:
+                    return 1.0;
             }
         }
+
 
         private int GetAttributeWeight(string position, string attribute)
         {

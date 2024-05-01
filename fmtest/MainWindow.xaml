@@ -4,18 +4,29 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:fmtest"
+        xmlns:dge="clr-namespace:DataGridExtensions;assembly=DataGridExtensions"
         mc:Ignorable="d"
         Title="MainWindow" Height="500" Width="1600">
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="207*"/>
             <ColumnDefinition Width="170*"/>
             <ColumnDefinition Width="1223*"/>
         </Grid.ColumnDefinitions>
+
         <Button Name="btnSelectFolder" Click="btnSelectFolder_Click" Content="Select Folder" HorizontalAlignment="Center" Margin="0,36,0,0" VerticalAlignment="Top" Width="100" Grid.Column="1"/>
         <TextBlock Name="txtSelectedFolder" HorizontalAlignment="Left" Margin="0,35,0,0" TextWrapping="Wrap" Text="Selected folder path will appear here" VerticalAlignment="Top" Grid.Column="2"/>
         <Button x:Name="FindFileButton" Content="Find Recent File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="FindFileButton_Click" Margin="29,41,0,0"/>
-        <DataGrid x:Name="PlayerDataGrid" AutoGenerateColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" Margin="10,125,31,127" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="3" IsReadOnly="True">
+
+        <DataGrid x:Name="PlayerDataGrid" 
+                  AutoGenerateColumns="True"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
+                  IsReadOnly="True"
+                  Margin="10,125,31,127" 
+                  RenderTransformOrigin="0.5,0.5" 
+                  Grid.ColumnSpan="3">
             <DataGrid.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>
@@ -24,6 +35,17 @@
                     <TranslateTransform/>
                 </TransformGroup>
             </DataGrid.RenderTransform>
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Filter" Click="FilterMenuItem_Click" />
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
         </DataGrid>
     </Grid>
 </Window>

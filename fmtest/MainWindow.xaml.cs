@@ -188,6 +188,7 @@ namespace fmtest
                     SegundoVolanteScore = await abilityCalculations.CalculateSegundoVolanteOnSupport(player),
                     WingBackAttacking = await abilityCalculations.CalculateWingBackAttacking(player),
                     SweeperKeeper = await abilityCalculations.CalculateSweeperKeeper(player),
+                    ShotStopper = await abilityCalculations.CalculateShotStopper(player),
                     DeepLyingPlaymaker = await   abilityCalculations.CalculateDeepLyingPlaymaker(player),
                     WonderkidScore = await abilityCalculations.CalculateWonderkidPotential(player),
                     DefensiveMidfielder = await abilityCalculations.CalculateDefensiveMidfielder(player)

@@ -25,6 +25,7 @@
         public int InsideForwardScore { get; set; }
         public int WingBackAttacking { get; set; }
         public int SweeperKeeper { get; set; }
+        public int ShotStopper { get; set; }
         public int DeepLyingPlaymaker { get; set; }
         public int DefensiveMidfielder { get; set; }
     }
