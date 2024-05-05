@@ -1,4 +1,7 @@
-﻿namespace fmtest
+﻿using AngleSharp.Text;
+using System.Text.RegularExpressions;
+
+namespace fmtest
 {
     /// <summary>
     /// Interface for ability calculators.
@@ -76,74 +79,84 @@
             var ability = 0;
 
             // Weights are hypothetical and can be adjusted based on your game analysis
-            int weightHeading = 3;
-            int weightMarking = 3;
-            int weightPassing = 2;
-            int weightTackling = 3;
-            int weightComposure = 2;
-            int weightPositioning = 3;
-            int weightJumpingReach = 2;
-            int weightStrength = 2;
-            int weightAcceleration = 2;
-            int weightAgility = 2;
-            int weightBalance = 2;
+            int weightHeading = 4;
+            int weightMarking = 4;
+            int weightTackling = 4;
+            int weightPositioning = 4;
+            int weightStrength = 3;
+            int weightJumpingReach = 3;
+            int weightPace = 3;
+            int weightAcceleration = 3;
+            int weightAgility = 3;
+            int weightStamina = 3;
+            int weightWorkRate = 3;
+            int weightDetermination = 3;
+            int weightBravery = 3;
+            int weightConcentration = 3;
+            int weightDecisions = 3;
+            int weightAnticipation = 3;
 
-            // Desirable traits, weighted less as they are not key but still important.
+            int weightPassing = 2;
+            int weightComposure = 2;
+            int weightBalance = 2;
+            int weightAggression = 2;
+            int weightLeadership = 2;
+
             int weightFirstTouch = 1;
             int weightTechnique = 1;
-            int weightAggression = 1;
-            int weightAnticipation = 2;
-            int weightBravery = 2;
-            int weightConcentration = 2;
-            int weightDecisions = 2;
             int weightVision = 1;
-            int weightPace = 1;
-            int weightStamina = 2;
-            int weightWorkRate = 2;
-            int weightDetermination = 2;
-            int weightLeadership = 1;
 
             // Calculate ability score
             ability += pa.Hea * weightHeading;
             ability += pa.Mar * weightMarking;
-            ability += pa.Pas * weightPassing;
             ability += pa.Tck * weightTackling;
-            ability += pa.Cmp * weightComposure;
             ability += pa.Pos * weightPositioning;
-            ability += pa.Jum * weightJumpingReach;
             ability += pa.Str * weightStrength;
+            ability += pa.Jum * weightJumpingReach;
+            ability += pa.Pac * weightPace;
             ability += pa.Acc * weightAcceleration;
             ability += pa.Agi * weightAgility;
-            ability += pa.Bal * weightBalance;
-
-            // Add desirable traits
-            ability += pa.Fir * weightFirstTouch;
-            ability += pa.Tec * weightTechnique;
-            ability += pa.Agg * weightAggression;
-            ability += pa.Ant * weightAnticipation;
-            ability += pa.Bra * weightBravery;
-            ability += pa.Cnt * weightConcentration;
-            ability += pa.Dec * weightDecisions;
-            ability += pa.Vis * weightVision;
-            ability += pa.Pac * weightPace;
             ability += pa.Sta * weightStamina;
             ability += pa.Wor * weightWorkRate;
             ability += pa.Det * weightDetermination;
+            ability += pa.Bra * weightBravery;
+            ability += pa.Cnt * weightConcentration;
+            ability += pa.Dec * weightDecisions;
+            ability += pa.Ant * weightAnticipation;
+
+            ability += pa.Pas * weightPassing;
+            ability += pa.Cmp * weightComposure;
+            ability += pa.Bal * weightBalance;
+            ability += pa.Agg * weightAggression;
             //ability += pa.Lea * weightLeadership;
+
+            ability += pa.Fir * weightFirstTouch;
+            ability += pa.Tec * weightTechnique;
+            ability += pa.Vis * weightVision;
+
+            string heightString = Regex.Match(pa.Height, @"\d+").Value;
+            int height;
+            if (int.TryParse(heightString, out height))
+            {
+                int heightScore = GetHeightScore(height);
+                ability += heightScore;
+            }
 
             return ability;
 
-            ////Normalize the ability score to a 0 - 100 range
-            //int maxScore = 20 * (weightHeading + weightMarking + weightPassing + weightTackling +
-            //                     weightComposure + weightPositioning + weightJumpingReach + weightStrength +
-            //                     weightAcceleration + weightAgility + weightBalance + weightFirstTouch +
-            //                     weightTechnique + weightAggression + weightAnticipation + weightBravery +
-            //                     weightConcentration + weightDecisions + weightVision + weightPace +
-            //                     weightStamina + weightWorkRate + weightDetermination + weightLeadership);
+            //// Normalize the ability score to a 0-100 range
+            //int maxScore = 20 * (weightHeading + weightMarking + weightTackling + weightPositioning +
+            //    weightStrength + weightJumpingReach + weightPace + weightAcceleration + weightAgility +
+            //    weightStamina + weightWorkRate + weightDetermination + weightBravery + weightConcentration +
+            //    weightDecisions + weightAnticipation + weightPassing + weightComposure + weightBalance +
+            //    weightAggression + weightLeadership + weightFirstTouch + weightTechnique + weightVision) +
+            //    GetMaxHeightScore();
+
             //int normalizedAbility = (int)((double)ability / maxScore * 100);
 
             //return normalizedAbility;
         }
+
 
         public async Task<int> CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
         {
@@ -232,13 +245,14 @@
             ability += pa.Lon * weightTier3; // Long Shots
             //ability += pa.Pen * weightTier3; // Penalty Taking
 
+            return ability;
             // Calculate the maximum possible score based on the weights and number of attributes
-            int maxScore = (6 * weightTier1) + (6 * weightTier2) + (6 * weightTier3);
+            //int maxScore = (6 * weightTier1) + (6 * weightTier2) + (6 * weightTier3);
 
-            // Normalize the ability score to a 0-100 range
-            int normalizedAbility = (int)((double)ability / maxScore * 100);
+            //// Normalize the ability score to a 0-100 range
+            //int normalizedAbility = (int)((double)ability / maxScore * 100);
 
-            return normalizedAbility;
+            //return normalizedAbility;
         }
 
         public async Task<int> CalculateInsideForward(PlayerAttributes pa)
@@ -449,35 +463,149 @@
             return ability;
         }
 
+        public async Task<int> CalculateAmAbility(PlayerAttributes pa)
+        {
+            var ability = 0;
+
+            // Weights for key attributes
+            int weightTechnique = 5;
+            int weightPassing = 5;
+            int weightVision = 5;
+            int weightCreativity = 5;
+            int weightOffTheBall = 4;
+            int weightDribbling = 4;
+            int weightFirstTouch = 4;
+            int weightLongShots = 3;
+            int weightFinishing = 3;
+            int weightComposure = 3;
+            int weightDecisions = 3;
+            int weightWorkRate = 3;
+            int weightStamina = 3;
+            int weightAgility = 3;
+            int weightBalance = 3;
+            int weightAcceleration = 2;
+            int weightPace = 2;
+            int weightStrength = 1;
+            int weightBravery = 1;
+            int weightDetermination = 2;
+            int weightFlair = 2;
+            int weightAnticipation = 2;
+            int weightConcentration = 2;
+            int weightLeadership = 1;
+
+            // Calculate ability score
+            ability += pa.Tec * weightTechnique;
+            ability += pa.Pas * weightPassing;
+            ability += pa.Vis * weightVision;
+            ability += pa.Fla * weightCreativity;
+            ability += pa.OtB * weightOffTheBall;
+            ability += pa.Dri * weightDribbling;
+            ability += pa.Fir * weightFirstTouch;
+            ability += pa.Lon * weightLongShots;
+            ability += pa.Fin * weightFinishing;
+            ability += pa.Cmp * weightComposure;
+            ability += pa.Dec * weightDecisions;
+            ability += pa.Wor * weightWorkRate;
+            ability += pa.Sta * weightStamina;
+            ability += pa.Agi * weightAgility;
+            ability += pa.Bal * weightBalance;
+            ability += pa.Acc * weightAcceleration;
+            ability += pa.Pac * weightPace;
+            ability += pa.Str * weightStrength;
+            ability += pa.Bra * weightBravery;
+            ability += pa.Det * weightDetermination;
+            ability += pa.Fla * weightFlair;
+            ability += pa.Ant * weightAnticipation;
+            ability += pa.Cnt * weightConcentration;
+            //ability += pa.Lea * weightLeadership;
+
+            return ability;
+
+            //// Normalize the ability score to a 0-100 range
+            //int maxScore = 20 * (weightTechnique + weightPassing + weightVision + weightCreativity +
+            //    weightOffTheBall + weightDribbling + weightFirstTouch + weightLongShots + weightFinishing +
+            //    weightComposure + weightDecisions + weightWorkRate + weightStamina + weightAgility +
+            //    weightBalance + weightAcceleration + weightPace + weightStrength + weightBravery +
+            //    weightDetermination + weightFlair + weightAnticipation + weightConcentration + weightLeadership);
+
+            //int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            //return normalizedAbility;
+        }
+
         public async Task<int> CalculateDefensiveMidfielder(PlayerAttributes pa)
         {
             var ability = 0;
 
-            // Weights for key attributes, higher because they are essential for the role.
-            int weightKey = 3;
+            // Weights for key attributes
+            int weightTackling = 5;
+            int weightMarking = 5;
+            int weightPositioning = 5;
+            int weightStrength = 4;
+            int weightStamina = 4;
+            int weightWorkRate = 4;
+            int weightPassing = 3;
+            int weightDecisions = 3;
+            int weightAnticipation = 3;
+            int weightTeamwork = 3;
+            int weightAgility = 2;
+            int weightBalance = 2;
+            int weightConcentration = 2;
+            int weightBravery = 2;
+            int weightComposure = 2;
+            int weightDetermination = 2;
+            int weightVision = 1;
+            int weightAcceleration = 1;
+            int weightPace = 1;
+            int weightFirstTouch = 1;
+            int weightHeading = 1;
 
-            // Key attributes for a defensive midfielder
-            ability += pa.Mar * weightKey; // Marking
-            ability += pa.Tck * weightKey; // Tackling
-            ability += pa.Str * weightKey; // Strength
-            ability += pa.Pos * weightKey; // Positioning
+            // Calculate ability score
+            ability += pa.Tck * weightTackling;
+            ability += pa.Mar * weightMarking;
+            ability += pa.Pos * weightPositioning;
+            ability += pa.Str * weightStrength;
+            ability += pa.Sta * weightStamina;
+            ability += pa.Wor * weightWorkRate;
+            ability += pa.Pas * weightPassing;
+            ability += pa.Dec * weightDecisions;
+            ability += pa.Ant * weightAnticipation;
+            ability += pa.Tea * weightTeamwork;
+            ability += pa.Agi * weightAgility;
+            ability += pa.Bal * weightBalance;
+            ability += pa.Cnt * weightConcentration;
+            ability += pa.Bra * weightBravery;
+            ability += pa.Cmp * weightComposure;
+            ability += pa.Det * weightDetermination;
+            ability += pa.Vis * weightVision;
+            ability += pa.Acc * weightAcceleration;
+            ability += pa.Pac * weightPace;
+            ability += pa.Fir * weightFirstTouch;
+            ability += pa.Hea * weightHeading;
 
-            // Secondary attributes for a defensive midfielder
-            int weightSecondary = 2;
-            ability += pa.Wor * weightSecondary; // Work Rate
-            ability += pa.Sta * weightSecondary; // Stamina
-            ability += pa.Agi * weightSecondary; // Agility
-            ability += pa.Bal * weightSecondary; // Balance
-
-            // Additional attributes that could benefit a defensive midfielder
-            int weightAdditional = 1;
-            ability += pa.Pas * weightAdditional; // Passing
-            ability += pa.Dec * weightAdditional; // Decisions
-            ability += pa.Ant * weightAdditional; // Anticipation
-            ability += pa.Tea * weightAdditional; // Teamwork
+            // Calculate height score
+            string heightString = Regex.Match(pa.Height, @"\d+").Value;
+            int height;
+            if (int.TryParse(heightString, out height))
+            {
+                int heightScore = GetHeightScore(height);
+                ability += heightScore;
+            }
 
             return ability;
+
+            //// Normalize the ability score to a 0-100 range
+            //int maxScore = 20 * (weightTackling + weightMarking + weightPositioning + weightStrength +
+            //    weightStamina + weightWorkRate + weightPassing + weightDecisions + weightAnticipation +
+            //    weightTeamwork + weightAgility + weightBalance + weightConcentration + weightBravery +
+            //    weightComposure + weightDetermination + weightVision + weightAcceleration + weightPace +
+            //    weightFirstTouch + weightHeading) + GetMaxHeightScoreForDefensiveMidfielder();
+
+            //int normalizedAbility = (int)((double)ability / maxScore * 100);
+
+            //return normalizedAbility;
         }
+
 
         public async Task<int> CalculateWonderkidPotential(PlayerAttributes pa)
         {
@@ -667,6 +795,37 @@
                     }
                 default:
                     return 1;
+            }
+        }
+
+        private int GetHeightScore(int height)
+        {
+            int minDesirableHeight = 185; // Minimum desirable height for a defender in centimeters
+            int optimalHeight = 190; // Optimal height for a defender in centimeters
+            int maxDesirableHeight = 200; // Maximum desirable height for a defender in centimeters
+
+            if (height >= minDesirableHeight && height <= maxDesirableHeight)
+            {
+                if (height >= optimalHeight)
+                {
+                    return 100; // Maximum score for defenders taller than or equal to the optimal height
+                }
+                else
+                {
+                    int heightDifference = optimalHeight - height;
+                    int scoreReduction = heightDifference * 2; // Reduce score by 2 for each centimeter below the optimal height
+                    return Math.Max(0, 100 - scoreReduction);
+                }
+            }
+            else if (height < minDesirableHeight)
+            {
+                int heightDifference = minDesirableHeight - height;
+                int scoreReduction = heightDifference * 5; // Reduce score by 5 for each centimeter below the minimum desirable height
+                return Math.Max(0, 100 - scoreReduction);
+            }
+            else // height > maxDesirableHeight
+            {
+                return 100; // Maximum score for exceptionally tall defenders
             }
         }
     }

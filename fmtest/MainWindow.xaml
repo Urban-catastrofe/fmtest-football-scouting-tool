@@ -19,14 +19,30 @@
         <TextBlock Name="txtSelectedFolder" HorizontalAlignment="Left" Margin="0,35,0,0" TextWrapping="Wrap" Text="Selected folder path will appear here" VerticalAlignment="Top" Grid.Column="2"/>
         <Button x:Name="FindFileButton" Content="Find Recent File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="FindFileButton_Click" Margin="29,41,0,0"/>
 
-        <DataGrid x:Name="PlayerDataGrid" 
-                  AutoGenerateColumns="True"
-                  EnableRowVirtualization="True"
-                  EnableColumnVirtualization="True"
-                  IsReadOnly="True"
-                  Margin="10,125,31,127" 
-                  RenderTransformOrigin="0.5,0.5" 
-                  Grid.ColumnSpan="3">
+        <DataGrid x:Name="PlayerDataGrid"
+              AutoGenerateColumns="True"
+              EnableRowVirtualization="True"
+              EnableColumnVirtualization="True"
+              IsReadOnly="True"
+              Margin="10,125,31,127"
+              RenderTransformOrigin="0.5,0.5"
+              Grid.ColumnSpan="3"
+              RowHeaderWidth="0"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserResizeRows="False"
+              SelectionMode="Single"
+              SelectionUnit="FullRow"
+              AlternatingRowBackground="LightGray"
+              RowBackground="White"
+              GridLinesVisibility="Horizontal"
+              HorizontalGridLinesBrush="LightGray"
+              VerticalGridLinesBrush="Transparent"
+              FontFamily="Arial"
+              FontSize="12">
+            <DataGrid.CommandBindings>
+                <CommandBinding Command="Copy" CanExecute="CopyCommand_CanExecute" Executed="CopyCommand_Executed" />
+            </DataGrid.CommandBindings>
             <DataGrid.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>
@@ -37,6 +53,13 @@
             </DataGrid.RenderTransform>
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#FF0066CC" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                    <Setter Property="Padding" Value="10" />
+                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                    <Setter Property="BorderBrush" Value="White" />
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu>
@@ -46,6 +69,21 @@
                     </Setter>
                 </Style>
             </DataGrid.ColumnHeaderStyle>
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="Padding" Value="10" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                <Border Padding="{TemplateBinding Padding}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.CellStyle>
         </DataGrid>
     </Grid>
 </Window>

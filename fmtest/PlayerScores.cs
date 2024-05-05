@@ -28,5 +28,6 @@
         public int ShotStopper { get; set; }
         public int DeepLyingPlaymaker { get; set; }
         public int DefensiveMidfielder { get; set; }
+        public int AttackingMidfielderScore { get; set; }
     }
 }

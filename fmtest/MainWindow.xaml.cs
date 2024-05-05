@@ -3,6 +3,7 @@ using AngleSharp.Html.Parser;
 using System.Data;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 
 namespace fmtest
 {
@@ -183,6 +184,7 @@ namespace fmtest
                     RightFoot = player.RightFoot,
                     Height = player.Height,
                     AdvancedForwardScore = await abilityCalculations.CalculateAdvancedForward(player),
+                    AttackingMidfielderScore = await abilityCalculations.CalculateAmAbility(player),
                     BpdDefendScore = await abilityCalculations.CalculateBpdOnDefend(player),
                     InsideForwardScore = await abilityCalculations.CalculateInsideForward(player),
                     SegundoVolanteScore = await abilityCalculations.CalculateSegundoVolanteOnSupport(player),
@@ -215,6 +217,27 @@ namespace fmtest
             {
                 txtSelectedFolder.Text = cachedPath;
             }
+        }
+
+        private void CopyCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = PlayerDataGrid.SelectedItems.Count > 0;
+        }
+
+        private void CopyCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var selectedItems = PlayerDataGrid.SelectedItems.Cast<PlayerScores>().ToList();
+            if (selectedItems.Any())
+            {
+                var clipboardText = string.Join(Environment.NewLine, selectedItems.Select(GetClipboardText));
+                Clipboard.SetText(clipboardText);
+            }
+        }
+
+        private string GetClipboardText(PlayerScores player)
+        {
+            // Customize the format of the clipboard text based on your requirements
+            return $"{player.Name}";
         }
     }
 }
