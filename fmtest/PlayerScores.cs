@@ -29,5 +29,7 @@
         public int DeepLyingPlaymaker { get; set; }
         public int DefensiveMidfielder { get; set; }
         public int AttackingMidfielderScore { get; set; }
+        public int DealFactor { get; set; }
+
     }
 }

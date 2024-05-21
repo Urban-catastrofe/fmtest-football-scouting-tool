@@ -260,6 +260,7 @@ namespace fmtest
             int ability = 0;
 
             // Assign weights for key (green), desirable (blue), and additional (yellow) attributes.
+            int weightRequired = 5;
             int weightKey = 3;
             int weightDesirable = 2;
             int weightAdditional = 1;
@@ -270,7 +271,7 @@ namespace fmtest
             ability += pa.Fir * weightKey; // First Touch
             ability += pa.Pas * weightKey; // Passing
             ability += pa.Tec * weightKey; // Technique
-            ability += pa.Acc * weightKey; // Acceleration
+            ability += pa.Acc * weightRequired; // Acceleration
             ability += pa.Agi * weightKey; // Agility
             ability += pa.OtB * weightKey; // Off the Ball
             ability += pa.Ant * weightKey; // Anticipation
@@ -282,7 +283,7 @@ namespace fmtest
             ability += pa.Dec * weightDesirable; // Decisions
             ability += pa.Vis * weightDesirable; // Vision
             ability += pa.Wor * weightDesirable; // Work Rate
-            ability += pa.Pac * weightDesirable; // Pace
+            ability += pa.Pac * weightRequired; // Pace
             ability += pa.Sta * weightDesirable; // Stamina
             ability += pa.Bal * weightDesirable; // Balance
             ability += pa.Fla * weightDesirable; // Flair
@@ -649,6 +650,75 @@ namespace fmtest
             //int normalizedPotential = (int)((double)potential / maxPotential * 100);
 
             //return normalizedPotential;
+        }
+
+        public async Task<int> CalculateDealFactor(int abilityScore, string transferValueString, string minFeeRlsString, string minFeeRlsToForeignClubsString)
+        {
+            int transferValue = ParseTransferValue(transferValueString);
+            int minFeeRls = ParseTransferValue(minFeeRlsString);
+            int minFeeRlsToForeignClubs = ParseTransferValue(minFeeRlsToForeignClubsString);
+
+            if (transferValue != 0)
+            {
+                double abilityWeight = 0.7; // Adjust the weight given to the ability score (between 0 and 1)
+                double transferValueWeight = 0.3; // Adjust the weight given to the transfer value (between 0 and 1)
+
+                double normalizedAbilityScore = (double)abilityScore / 1000; // Normalize the ability score to a 0-1 range
+                double normalizedTransferValue = Math.Log10(transferValue) / 8; // Normalize the transfer value using a logarithmic scale
+
+                double dealFactor = (abilityWeight * normalizedAbilityScore) + (transferValueWeight * (1 - normalizedTransferValue));
+
+                // Check if the player has a minimum release fee or minimum release fee to foreign clubs
+                if (minFeeRls > 0 || minFeeRlsToForeignClubs > 0)
+                {
+                    int minFee = Math.Min(minFeeRls, minFeeRlsToForeignClubs);
+                    if (minFee > 0 && minFee < transferValue)
+                    {
+                        double minFeeWeight = 0.2; // Adjust the weight given to the minimum release fee (between 0 and 1)
+                        double normalizedMinFee = Math.Log10(minFee) / 8; // Normalize the minimum release fee using a logarithmic scale
+                        dealFactor += minFeeWeight * (1 - normalizedMinFee);
+                    }
+                }
+
+                return (int)(dealFactor * 100); // Scale the DEAL factor to a 0-100 range
+            }
+            return 0; // Return 0 if the transfer value is invalid
+        }
+
+        private int ParseTransferValue(string transferValueString)
+        {
+            if (string.IsNullOrWhiteSpace(transferValueString))
+            {
+                return 1000000; // Return a default value (e.g., 1 million) when the transfer value is empty or null
+            }
+
+            // Check if the transferValueString contains a range
+            if (transferValueString.Contains(" - "))
+            {
+                string[] values = transferValueString.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
+                if (values.Length == 2)
+                {
+                    string minValueString = values[0].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+                    string maxValueString = values[1].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+
+                    decimal minValue, maxValue;
+                    if (decimal.TryParse(minValueString, out minValue) && decimal.TryParse(maxValueString, out maxValue))
+                    {
+                        return (int)((minValue + maxValue) / 2); // Return the average of the range
+                    }
+                }
+            }
+            else // Single value
+            {
+                string valueString = transferValueString.Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+                decimal value;
+                if (decimal.TryParse(valueString, out value))
+                {
+                    return (int)value;
+                }
+            }
+
+            return 0; // Return 0 if parsing fails or the input is invalid
         }
 
         private double CalculateAgeMultiplier(int age)

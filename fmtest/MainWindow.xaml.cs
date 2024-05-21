@@ -191,14 +191,41 @@ namespace fmtest
                     WingBackAttacking = await abilityCalculations.CalculateWingBackAttacking(player),
                     SweeperKeeper = await abilityCalculations.CalculateSweeperKeeper(player),
                     ShotStopper = await abilityCalculations.CalculateShotStopper(player),
-                    DeepLyingPlaymaker = await   abilityCalculations.CalculateDeepLyingPlaymaker(player),
+                    DeepLyingPlaymaker = await abilityCalculations.CalculateDeepLyingPlaymaker(player),
                     WonderkidScore = await abilityCalculations.CalculateWonderkidPotential(player),
                     DefensiveMidfielder = await abilityCalculations.CalculateDefensiveMidfielder(player)
                 };
+
+                // Calculate the DEAL factor based on the player's highest ability score
+                int highestAbilityScore = new int[]
+                {
+                    scores.AdvancedForwardScore,
+                    scores.AttackingMidfielderScore,
+                    scores.BpdDefendScore,
+                    scores.InsideForwardScore,
+                    scores.SegundoVolanteScore,
+                    scores.WingBackAttacking,
+                    scores.SweeperKeeper,
+                    scores.ShotStopper,
+                    scores.DeepLyingPlaymaker,
+                    scores.WonderkidScore,
+                    scores.DefensiveMidfielder
+                }.Max();
+
+                scores.DealFactor = await abilityCalculations.CalculateDealFactor(highestAbilityScore, player.TransferValue, player.MinFeeRls, player.MinFeeRlsToForeignClubs);
+
                 return scores;
             }));
 
             PlayerDataGrid.ItemsSource = playerScores;
+
+            //// Find the player with the highest DEAL factor
+            //PlayerScores bestDeal = playerScores.OrderByDescending(p => p.DealFactor).FirstOrDefault();
+            //if (bestDeal != null)
+            //{
+            //    // Display or process the player with the best deal
+            //    Console.WriteLine($"Best Deal: {bestDeal.Name} (DEAL Factor: {bestDeal.DealFactor})");
+            //}
         }
 
         private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
