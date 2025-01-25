@@ -9,37 +9,80 @@
         Title="MainWindow" Height="500" Width="1600">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="207*"/>
             <ColumnDefinition Width="170*"/>
             <ColumnDefinition Width="1223*"/>
         </Grid.ColumnDefinitions>
 
-        <Button Name="btnSelectFolder" Click="btnSelectFolder_Click" Content="Select Folder" HorizontalAlignment="Center" Margin="0,36,0,0" VerticalAlignment="Top" Width="100" Grid.Column="1"/>
-        <TextBlock Name="txtSelectedFolder" HorizontalAlignment="Left" Margin="0,35,0,0" TextWrapping="Wrap" Text="Selected folder path will appear here" VerticalAlignment="Top" Grid.Column="2"/>
-        <Button x:Name="FindFileButton" Content="Find Recent File" HorizontalAlignment="Left" VerticalAlignment="Top" Click="FindFileButton_Click" Margin="29,41,0,0"/>
+        <!-- Loading Indicator -->
+        <ProgressBar x:Name="LoadingIndicator" 
+                     Grid.Row="0"
+                     Grid.ColumnSpan="3"
+                     Height="2" 
+                     VerticalAlignment="Top" 
+                     Visibility="Collapsed"
+                     Background="Transparent"
+                     Foreground="#FF0066CC"
+                     IsIndeterminate="False"
+                     Minimum="0"
+                     Maximum="100"/>
+
+        <!-- Existing Controls -->
+        <Button Name="btnSelectFolder" 
+                Grid.Row="0"
+                Click="btnSelectFolder_Click" 
+                Content="Select Folder" 
+                HorizontalAlignment="Center" 
+                Margin="0,36,0,0" 
+                VerticalAlignment="Top" 
+                Width="100" 
+                Grid.Column="1"/>
+                
+        <TextBlock Name="txtSelectedFolder" 
+                   Grid.Row="0"
+                   HorizontalAlignment="Left" 
+                   Margin="0,35,0,0" 
+                   TextWrapping="Wrap" 
+                   Text="Selected folder path will appear here" 
+                   VerticalAlignment="Top" 
+                   Grid.Column="2"/>
+                   
+        <Button x:Name="FindFileButton" 
+                Grid.Row="0"
+                Content="Find Recent File" 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Top" 
+                Click="FindFileButton_Click" 
+                Margin="29,41,0,0"/>
 
         <DataGrid x:Name="PlayerDataGrid"
-              AutoGenerateColumns="True"
-              EnableRowVirtualization="True"
-              EnableColumnVirtualization="True"
-              IsReadOnly="True"
-              Margin="10,125,31,127"
-              RenderTransformOrigin="0.5,0.5"
-              Grid.ColumnSpan="3"
-              RowHeaderWidth="0"
-              CanUserAddRows="False"
-              CanUserDeleteRows="False"
-              CanUserResizeRows="False"
-              SelectionMode="Single"
-              SelectionUnit="FullRow"
-              AlternatingRowBackground="LightGray"
-              RowBackground="White"
-              GridLinesVisibility="Horizontal"
-              HorizontalGridLinesBrush="LightGray"
-              VerticalGridLinesBrush="Transparent"
-              FontFamily="Arial"
-              FontSize="12">
+                  Grid.Row="1"
+                  Grid.ColumnSpan="3"
+                  AutoGenerateColumns="True"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
+                  IsReadOnly="True"
+                  Margin="10,10,31,127"
+                  RenderTransformOrigin="0.5,0.5"
+                  RowHeaderWidth="0"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserResizeRows="False"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  AlternatingRowBackground="LightGray"
+                  RowBackground="White"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="LightGray"
+                  VerticalGridLinesBrush="Transparent"
+                  FontFamily="Arial"
+                  FontSize="12">
             <DataGrid.CommandBindings>
                 <CommandBinding Command="Copy" CanExecute="CopyCommand_CanExecute" Executed="CopyCommand_Executed" />
             </DataGrid.CommandBindings>

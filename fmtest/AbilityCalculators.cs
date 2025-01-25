@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Text;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace fmtest
 {
@@ -74,7 +75,9 @@ namespace fmtest
 
     class AbilityCalculators
     {
-        public async Task<int> CalculateBpdOnDefend(PlayerAttributes pa)
+        private readonly ConcurrentDictionary<string, int> _transferValueCache = new ConcurrentDictionary<string, int>();
+
+        public int CalculateBpdOnDefend(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -158,7 +161,7 @@ namespace fmtest
         }
 
 
-        public async Task<int> CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
+        public int CalculateSegundoVolanteOnSupport(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -209,7 +212,7 @@ namespace fmtest
             return ability;
         }
 
-        public async Task<int> CalculateAdvancedForward(PlayerAttributes pa)
+        public int CalculateAdvancedForward(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -255,7 +258,7 @@ namespace fmtest
             //return normalizedAbility;
         }
 
-        public async Task<int> CalculateInsideForward(PlayerAttributes pa)
+        public int CalculateInsideForward(PlayerAttributes pa)
         {
             int ability = 0;
 
@@ -302,7 +305,7 @@ namespace fmtest
             return normalizedAbility;
         }
 
-        public async Task<int> CalculateWingBackAttacking(PlayerAttributes pa)
+        public int CalculateWingBackAttacking(PlayerAttributes pa)
         {
             int ability = 0;
 
@@ -353,7 +356,7 @@ namespace fmtest
             return normalizedAbility;
         }
 
-        public async Task<int> CalculateSweeperKeeper(PlayerAttributes pa)
+        public int CalculateSweeperKeeper(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -391,7 +394,7 @@ namespace fmtest
             return normalizedAbility;
         }
 
-        public async Task<int> CalculateShotStopper(PlayerAttributes pa)
+        public int CalculateShotStopper(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -426,7 +429,7 @@ namespace fmtest
             return normalizedAbility;
         }
 
-        public async Task<int> CalculateDeepLyingPlaymaker(PlayerAttributes pa)
+        public int CalculateDeepLyingPlaymaker(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -464,7 +467,7 @@ namespace fmtest
             return ability;
         }
 
-        public async Task<int> CalculateAmAbility(PlayerAttributes pa)
+        public int CalculateAmAbility(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -534,7 +537,7 @@ namespace fmtest
             //return normalizedAbility;
         }
 
-        public async Task<int> CalculateDefensiveMidfielder(PlayerAttributes pa)
+        public int CalculateDefensiveMidfielder(PlayerAttributes pa)
         {
             var ability = 0;
 
@@ -608,7 +611,7 @@ namespace fmtest
         }
 
 
-        public async Task<int> CalculateWonderkidPotential(PlayerAttributes pa)
+        public int CalculateWonderkidPotential(PlayerAttributes pa)
         {
             double ageMultiplier = CalculateAgeMultiplier(pa.Age);
             double personalityMultiplier = (int)GetPersonalityMultiplier(pa.Personality);
@@ -652,7 +655,7 @@ namespace fmtest
             //return normalizedPotential;
         }
 
-        public async Task<int> CalculateDealFactor(int abilityScore, string transferValueString, string minFeeRlsString, string minFeeRlsToForeignClubsString)
+        public int CalculateDealFactor(int abilityScore, string transferValueString, string minFeeRlsString, string minFeeRlsToForeignClubsString)
         {
             int transferValue = ParseTransferValue(transferValueString);
             int minFeeRls = ParseTransferValue(minFeeRlsString);
@@ -689,36 +692,38 @@ namespace fmtest
         {
             if (string.IsNullOrWhiteSpace(transferValueString))
             {
-                return 1000000; // Return a default value (e.g., 1 million) when the transfer value is empty or null
+                return 1000000;
             }
 
-            // Check if the transferValueString contains a range
-            if (transferValueString.Contains(" - "))
+            return _transferValueCache.GetOrAdd(transferValueString, key =>
             {
-                string[] values = transferValueString.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
-                if (values.Length == 2)
+                // Check if the transferValueString contains a range
+                if (key.Contains(" - "))
                 {
-                    string minValueString = values[0].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-                    string maxValueString = values[1].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-
-                    decimal minValue, maxValue;
-                    if (decimal.TryParse(minValueString, out minValue) && decimal.TryParse(maxValueString, out maxValue))
+                    string[] values = key.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
+                    if (values.Length == 2)
                     {
-                        return (int)((minValue + maxValue) / 2); // Return the average of the range
+                        string minValueString = values[0].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+                        string maxValueString = values[1].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+
+                        decimal minValue, maxValue;
+                        if (decimal.TryParse(minValueString, out minValue) && decimal.TryParse(maxValueString, out maxValue))
+                        {
+                            return (int)((minValue + maxValue) / 2); // Return the average of the range
+                        }
                     }
                 }
-            }
-            else // Single value
-            {
-                string valueString = transferValueString.Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-                decimal value;
-                if (decimal.TryParse(valueString, out value))
+                else // Single value
                 {
-                    return (int)value;
+                    string valueString = key.Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
+                    decimal value;
+                    if (decimal.TryParse(valueString, out value))
+                    {
+                        return (int)value;
+                    }
                 }
-            }
-
-            return 0; // Return 0 if parsing fails or the input is invalid
+                return 0;
+            });
         }
 
         private double CalculateAgeMultiplier(int age)
@@ -738,7 +743,7 @@ namespace fmtest
             switch (personality)
             {
                 case "Model Citizen":
-                    return 1.2;
+                    return 1.3;
                 case "Perfectionist":
                     return 1.15;
                 case "Model Professional":

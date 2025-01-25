@@ -1,9 +1,13 @@
-﻿
+﻿using AngleSharp;
 using AngleSharp.Html.Parser;
 using System.Data;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Linq;
 
 namespace fmtest
 {
@@ -20,24 +24,52 @@ namespace fmtest
 
         private async void FindFileButton_Click(object sender, RoutedEventArgs e)
         {
-            string filePath = GetPath();
-            if (string.IsNullOrEmpty(filePath))
-            {
-                MessageBox.Show("File not found or invalid file path.");
-                return;
-            }
-
             try
             {
-                string html = await File.ReadAllTextAsync(filePath);
-                DataTable dataTable = await ParseHtmlToDataTableAsync(html);
-                List<PlayerAttributes> playerAttributes = MapDataTableToPlayerAttributes(dataTable);
+                FindFileButton.IsEnabled = false;
+                btnSelectFolder.IsEnabled = false;
+                LoadingIndicator.Visibility = Visibility.Visible;
+                Mouse.OverrideCursor = Cursors.Wait;
 
-                await CalculatePlayerScoresAsync(playerAttributes);
+                string filePath = GetPath();
+                if (string.IsNullOrEmpty(filePath))
+                {
+                    MessageBox.Show("File not found or invalid file path.");
+                    return;
+                }
+
+                LoadingIndicator.Value = 0;
+
+                // Run all heavy operations on a background thread
+                await Task.Run(async () =>
+                {
+                    // Load HTML (10%)
+                    string html = await LoadHtmlFileAsync(filePath);
+                    await UpdateProgressAsync(10);
+
+                    // Parse HTML (20%)
+                    DataTable dataTable = await ParseHtmlToDataTableAsync(html);
+                    await UpdateProgressAsync(20);
+
+                    // Map data (30%)
+                    List<PlayerAttributes> playerAttributes = MapDataTableToPlayerAttributes(dataTable);
+                    await UpdateProgressAsync(30);
+
+                    // Calculate scores (30% to 100%)
+                    await CalculatePlayerScoresAsync(playerAttributes, progress => 
+                        UpdateProgressAsync(30 + (progress * 0.7)));
+                });
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                FindFileButton.IsEnabled = true;
+                btnSelectFolder.IsEnabled = true;
+                LoadingIndicator.Visibility = Visibility.Collapsed;
+                Mouse.OverrideCursor = null;
             }
         }
 
@@ -61,10 +93,12 @@ namespace fmtest
 
         private async Task<DataTable> ParseHtmlToDataTableAsync(string html)
         {
-            var parser = new HtmlParser();
+            var config = Configuration.Default.WithDefaultLoader();
+            var context = BrowsingContext.New(config);
+            var parser = context.GetService<IHtmlParser>();
             var document = await parser.ParseDocumentAsync(html);
+            
             var tableElement = document.QuerySelector("table");
-
             if (tableElement == null)
             {
                 throw new InvalidOperationException("No table found in HTML string.");
@@ -72,12 +106,14 @@ namespace fmtest
 
             var dataTable = new DataTable();
 
+            // Add columns from header
             var headerRow = tableElement.QuerySelector("tr");
             foreach (var headerCell in headerRow.QuerySelectorAll("th"))
             {
                 dataTable.Columns.Add(headerCell.TextContent.Trim());
             }
 
+            // Add data rows
             var dataRows = tableElement.QuerySelectorAll("tr:not(:first-child)");
             foreach (var row in dataRows)
             {
@@ -159,73 +195,87 @@ namespace fmtest
                 .ToList();
         }
 
-        private async Task CalculatePlayerScoresAsync(List<PlayerAttributes> playerAttributes)
+        private async Task CalculatePlayerScoresAsync(List<PlayerAttributes> playerAttributes, 
+            Func<double, Task> progressCallback)
         {
             var abilityCalculations = new AbilityCalculators();
-
-            var playerScores = await Task.WhenAll(playerAttributes.Select(async player =>
+            var playerScores = new List<PlayerScores>();
+            const int batchSize = 1000;
+            
+            for (int i = 0; i < playerAttributes.Count; i += batchSize)
             {
-                var scores = new PlayerScores
+                var batch = playerAttributes.Skip(i).Take(batchSize);
+                var batchTasks = batch.Select(player =>
                 {
-                    Inf = player.Inf,
-                    Name = player.Name,
-                    Age = player.Age,
-                    Position = player.Position,
-                    Nat = player.Nat,
-                    Club = player.Club,
-                    TransferValue = player.TransferValue,
-                    Wage = player.Wage,
-                    MinAP = player.MinAP,
-                    MinFeeRls = player.MinFeeRls,
-                    MinFeeRlsToForeignClubs = player.MinFeeRlsToForeignClubs,
-                    Personality = player.Personality,
-                    MediaHandling = player.MediaHandling,
-                    LeftFoot = player.LeftFoot,
-                    RightFoot = player.RightFoot,
-                    Height = player.Height,
-                    AdvancedForwardScore = await abilityCalculations.CalculateAdvancedForward(player),
-                    AttackingMidfielderScore = await abilityCalculations.CalculateAmAbility(player),
-                    BpdDefendScore = await abilityCalculations.CalculateBpdOnDefend(player),
-                    InsideForwardScore = await abilityCalculations.CalculateInsideForward(player),
-                    SegundoVolanteScore = await abilityCalculations.CalculateSegundoVolanteOnSupport(player),
-                    WingBackAttacking = await abilityCalculations.CalculateWingBackAttacking(player),
-                    SweeperKeeper = await abilityCalculations.CalculateSweeperKeeper(player),
-                    ShotStopper = await abilityCalculations.CalculateShotStopper(player),
-                    DeepLyingPlaymaker = await abilityCalculations.CalculateDeepLyingPlaymaker(player),
-                    WonderkidScore = await abilityCalculations.CalculateWonderkidPotential(player),
-                    DefensiveMidfielder = await abilityCalculations.CalculateDefensiveMidfielder(player)
-                };
+                    return Task.Run(() =>
+                    {
+                        var scores = new PlayerScores
+                        {
+                            Inf = player.Inf,
+                            Name = player.Name,
+                            Age = player.Age,
+                            Position = player.Position,
+                            Nat = player.Nat,
+                            Club = player.Club,
+                            TransferValue = player.TransferValue,
+                            Wage = player.Wage,
+                            MinAP = player.MinAP,
+                            MinFeeRls = player.MinFeeRls,
+                            MinFeeRlsToForeignClubs = player.MinFeeRlsToForeignClubs,
+                            Personality = player.Personality,
+                            MediaHandling = player.MediaHandling,
+                            LeftFoot = player.LeftFoot,
+                            RightFoot = player.RightFoot,
+                            Height = player.Height
+                        };
 
-                // Calculate the DEAL factor based on the player's highest ability score
-                int highestAbilityScore = new int[]
-                {
-                    scores.AdvancedForwardScore,
-                    scores.AttackingMidfielderScore,
-                    scores.BpdDefendScore,
-                    scores.InsideForwardScore,
-                    scores.SegundoVolanteScore,
-                    scores.WingBackAttacking,
-                    scores.SweeperKeeper,
-                    scores.ShotStopper,
-                    scores.DeepLyingPlaymaker,
-                    scores.WonderkidScore,
-                    scores.DefensiveMidfielder
-                }.Max();
+                        // Calculate all scores (now synchronously)
+                        scores.AdvancedForwardScore = abilityCalculations.CalculateAdvancedForward(player);
+                        scores.AttackingMidfielderScore = abilityCalculations.CalculateAmAbility(player);
+                        scores.BpdDefendScore = abilityCalculations.CalculateBpdOnDefend(player);
+                        scores.InsideForwardScore = abilityCalculations.CalculateInsideForward(player);
+                        scores.SegundoVolanteScore = abilityCalculations.CalculateSegundoVolanteOnSupport(player);
+                        scores.WingBackAttacking = abilityCalculations.CalculateWingBackAttacking(player);
+                        scores.SweeperKeeper = abilityCalculations.CalculateSweeperKeeper(player);
+                        scores.ShotStopper = abilityCalculations.CalculateShotStopper(player);
+                        scores.DeepLyingPlaymaker = abilityCalculations.CalculateDeepLyingPlaymaker(player);
+                        scores.WonderkidScore = abilityCalculations.CalculateWonderkidPotential(player);
+                        scores.DefensiveMidfielder = abilityCalculations.CalculateDefensiveMidfielder(player);
 
-                scores.DealFactor = await abilityCalculations.CalculateDealFactor(highestAbilityScore, player.TransferValue, player.MinFeeRls, player.MinFeeRlsToForeignClubs);
+                        // Calculate DEAL factor
+                        int highestAbilityScore = new[] {
+                            scores.AdvancedForwardScore,
+                            scores.AttackingMidfielderScore,
+                            scores.BpdDefendScore,
+                            scores.InsideForwardScore,
+                            scores.SegundoVolanteScore,
+                            scores.WingBackAttacking,
+                            scores.SweeperKeeper,
+                            scores.ShotStopper,
+                            scores.DeepLyingPlaymaker,
+                            scores.WonderkidScore,
+                            scores.DefensiveMidfielder
+                        }.Max();
 
-                return scores;
-            }));
+                        scores.DealFactor = abilityCalculations.CalculateDealFactor(
+                            highestAbilityScore, 
+                            player.TransferValue, 
+                            player.MinFeeRls, 
+                            player.MinFeeRlsToForeignClubs);
 
-            PlayerDataGrid.ItemsSource = playerScores;
+                        return scores;
+                    });
+                });
 
-            //// Find the player with the highest DEAL factor
-            //PlayerScores bestDeal = playerScores.OrderByDescending(p => p.DealFactor).FirstOrDefault();
-            //if (bestDeal != null)
-            //{
-            //    // Display or process the player with the best deal
-            //    Console.WriteLine($"Best Deal: {bestDeal.Name} (DEAL Factor: {bestDeal.DealFactor})");
-            //}
+                var batchResults = await Task.WhenAll(batchTasks);
+                playerScores.AddRange(batchResults);
+
+                // Report progress
+                double progress = (double)Math.Min(i + batchSize, playerAttributes.Count) / playerAttributes.Count;
+                await progressCallback(progress);
+            }
+
+            await Dispatcher.InvokeAsync(() => PlayerDataGrid.ItemsSource = playerScores);
         }
 
         private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
@@ -265,6 +315,28 @@ namespace fmtest
         {
             // Customize the format of the clipboard text based on your requirements
             return $"{player.Name}";
+        }
+
+        private async Task<string> LoadHtmlFileAsync(string filePath)
+        {
+            // Use a buffer size that's a multiple of 4KB (common disk sector size)
+            const int bufferSize = 4096 * 4;
+            
+            using var fileStream = new FileStream(
+                filePath, 
+                FileMode.Open, 
+                FileAccess.Read, 
+                FileShare.Read,
+                bufferSize,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            
+            using var streamReader = new StreamReader(fileStream, Encoding.UTF8);
+            return await streamReader.ReadToEndAsync();
+        }
+
+        private async Task UpdateProgressAsync(double value)
+        {
+            await Dispatcher.InvokeAsync(() => LoadingIndicator.Value = value);
         }
     }
 }
