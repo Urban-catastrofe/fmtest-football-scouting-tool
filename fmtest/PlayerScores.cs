@@ -31,5 +31,21 @@
         public int AttackingMidfielderScore { get; set; }
         public int DealFactor { get; set; }
 
+        public Dictionary<string, int> GetRoleScores()
+        {
+            return new Dictionary<string, int>
+            {
+                { "AdvancedForward", AdvancedForwardScore },
+                { "AttackingMidfielder", AttackingMidfielderScore },
+                { "BallPlayingDefender", BpdDefendScore },
+                { "InsideForward", InsideForwardScore },
+                { "SegundoVolante", SegundoVolanteScore },
+                { "WingBack", WingBackAttacking },
+                { "SweeperKeeper", SweeperKeeper },
+                { "ShotStopper", ShotStopper },
+                { "DeepLyingPlaymaker", DeepLyingPlaymaker },
+                { "DefensiveMidfielder", DefensiveMidfielder },
+            };
+        }
     }
 }

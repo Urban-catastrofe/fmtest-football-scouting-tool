@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
+using fmtest.calculations;
 
 namespace fmtest
 {
@@ -198,7 +199,9 @@ namespace fmtest
         private async Task CalculatePlayerScoresAsync(List<PlayerAttributes> playerAttributes, 
             Func<double, Task> progressCallback)
         {
-            var abilityCalculations = new AbilityCalculators();
+            var wonderkidCalculator = new WonderkidCalculator();
+            var dealFactorCalculator = new DealFactorCalculator();
+            var abilityCalculations = new AbilityCalculators(dealFactorCalculator, wonderkidCalculator);
             var playerScores = new List<PlayerScores>();
             const int batchSize = 1000;
             
@@ -239,29 +242,12 @@ namespace fmtest
                         scores.SweeperKeeper = abilityCalculations.CalculateSweeperKeeper(player);
                         scores.ShotStopper = abilityCalculations.CalculateShotStopper(player);
                         scores.DeepLyingPlaymaker = abilityCalculations.CalculateDeepLyingPlaymaker(player);
-                        scores.WonderkidScore = abilityCalculations.CalculateWonderkidPotential(player);
                         scores.DefensiveMidfielder = abilityCalculations.CalculateDefensiveMidfielder(player);
 
-                        // Calculate DEAL factor
-                        int highestAbilityScore = new[] {
-                            scores.AdvancedForwardScore,
-                            scores.AttackingMidfielderScore,
-                            scores.BpdDefendScore,
-                            scores.InsideForwardScore,
-                            scores.SegundoVolanteScore,
-                            scores.WingBackAttacking,
-                            scores.SweeperKeeper,
-                            scores.ShotStopper,
-                            scores.DeepLyingPlaymaker,
-                            scores.WonderkidScore,
-                            scores.DefensiveMidfielder
-                        }.Max();
 
-                        scores.DealFactor = abilityCalculations.CalculateDealFactor(
-                            highestAbilityScore, 
-                            player.TransferValue, 
-                            player.MinFeeRls, 
-                            player.MinFeeRlsToForeignClubs);
+                        //scores.WonderkidScore = abilityCalculations.CalculateWonderkidPotential(player);
+                        scores.WonderkidScore = WonderkidCalculatorExtensions.CalculateWonderkidPotential(player);
+                        scores.DealFactor = DealFactorExtensions.CalculateDealFactor(player, scores);
 
                         return scores;
                     });

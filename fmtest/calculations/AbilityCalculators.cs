@@ -2,79 +2,18 @@
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 
-namespace fmtest
+namespace fmtest.calculations
 {
-    /// <summary>
-    /// Interface for ability calculators.
-    /// </summary>
-    interface IAbilityCalculators
+    public class AbilityCalculators
     {
-        /// <summary>
-        /// Calculates the ability score for a Ball-Playing Defender on Defend duty.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateBpdOnDefend(PlayerAttributes pa);
+        private readonly DealFactorCalculator _dealFactorCalculator;
+        private readonly WonderkidCalculator _wonderkidCalculator;
+        public AbilityCalculators(DealFactorCalculator dealFactorCalculator, WonderkidCalculator wonderkidCalculator)
+        {
+            _dealFactorCalculator = dealFactorCalculator;
+            _wonderkidCalculator = wonderkidCalculator;
+        }
 
-        /// <summary>
-        /// Calculates the ability score for a Segundo Volante on Support duty.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateSegundoVolanteOnSupport(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for an Advanced Forward.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateAdvancedForward(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for an Inside Forward.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateInsideForward(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for a Wing Back (Attacking).
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateWingBackAttacking(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for a Sweeper Keeper.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateSweeperKeeper(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for a Deep-Lying Playmaker.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateDeepLyingPlaymaker(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the ability score for a Defensive Midfielder.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The ability score.</returns>
-        int CalculateDefensiveMidfielder(PlayerAttributes pa);
-
-        /// <summary>
-        /// Calculates the potential ability score for a wonderkid.
-        /// </summary>
-        /// <param name="pa">The player attributes.</param>
-        /// <returns>The potential ability score.</returns>
-        int CalculateWonderkidPotential(PlayerAttributes pa);
-    }
-
-    class AbilityCalculators
-    {
         private readonly ConcurrentDictionary<string, int> _transferValueCache = new ConcurrentDictionary<string, int>();
 
         public int CalculateBpdOnDefend(PlayerAttributes pa)
@@ -613,265 +552,16 @@ namespace fmtest
 
         public int CalculateWonderkidPotential(PlayerAttributes pa)
         {
-            double ageMultiplier = CalculateAgeMultiplier(pa.Age);
-            double personalityMultiplier = (int)GetPersonalityMultiplier(pa.Personality);
-
-            int potential = 0;
-
-            // Define weights for each attribute based on the player's position
-            int worWeight = GetAttributeWeight(pa.Position, "Wor");
-            int detWeight = GetAttributeWeight(pa.Position, "Det");
-            int staWeight = GetAttributeWeight(pa.Position, "Sta");
-            int pacWeight = GetAttributeWeight(pa.Position, "Pac");
-            int accWeight = GetAttributeWeight(pa.Position, "Acc");
-            int tecWeight = GetAttributeWeight(pa.Position, "Tec");
-            int decWeight = GetAttributeWeight(pa.Position, "Dec");
-            int antWeight = GetAttributeWeight(pa.Position, "Ant");
-            int flaWeight = GetAttributeWeight(pa.Position, "Fla");
-            int natWeight = GetAttributeWeight(pa.Position, "Nat");
-
-            // Calculate the weighted sum of attributes
-            potential += pa.Wor * worWeight;
-            potential += pa.Det * detWeight;
-            potential += pa.Sta * staWeight;
-            potential += pa.Pac * pacWeight;
-            potential += pa.Acc * accWeight;
-            potential += pa.Tec * tecWeight;
-            potential += pa.Dec * decWeight;
-            potential += pa.Ant * antWeight;
-            potential += pa.Fla * flaWeight;
-            //potential += pa.Nat * natWeight;
-
-            // Apply the age multiplier
-            potential = (int)(potential * ageMultiplier * personalityMultiplier);
-
-            return potential;
-
-            //// Normalize the potential score to a range of 0-100
-            //int maxPotential = (20 * (worWeight + detWeight + staWeight + pacWeight + accWeight +
-            //                           tecWeight + decWeight + antWeight + flaWeight + natWeight)) * 5;
-            //int normalizedPotential = (int)((double)potential / maxPotential * 100);
-
-            //return normalizedPotential;
+           return _wonderkidCalculator.CalculateWonderkidPotential(pa);
         }
 
-        public int CalculateDealFactor(int abilityScore, string transferValueString, string minFeeRlsString, string minFeeRlsToForeignClubsString)
+        public int CalculateDealFactor(PlayerAttributes pa, PlayerScores roleScores)
         {
-            int transferValue = ParseTransferValue(transferValueString);
-            int minFeeRls = ParseTransferValue(minFeeRlsString);
-            int minFeeRlsToForeignClubs = ParseTransferValue(minFeeRlsToForeignClubsString);
-
-            if (transferValue != 0)
-            {
-                double abilityWeight = 0.7; // Adjust the weight given to the ability score (between 0 and 1)
-                double transferValueWeight = 0.3; // Adjust the weight given to the transfer value (between 0 and 1)
-
-                double normalizedAbilityScore = (double)abilityScore / 1000; // Normalize the ability score to a 0-1 range
-                double normalizedTransferValue = Math.Log10(transferValue) / 8; // Normalize the transfer value using a logarithmic scale
-
-                double dealFactor = (abilityWeight * normalizedAbilityScore) + (transferValueWeight * (1 - normalizedTransferValue));
-
-                // Check if the player has a minimum release fee or minimum release fee to foreign clubs
-                if (minFeeRls > 0 || minFeeRlsToForeignClubs > 0)
-                {
-                    int minFee = Math.Min(minFeeRls, minFeeRlsToForeignClubs);
-                    if (minFee > 0 && minFee < transferValue)
-                    {
-                        double minFeeWeight = 0.2; // Adjust the weight given to the minimum release fee (between 0 and 1)
-                        double normalizedMinFee = Math.Log10(minFee) / 8; // Normalize the minimum release fee using a logarithmic scale
-                        dealFactor += minFeeWeight * (1 - normalizedMinFee);
-                    }
-                }
-
-                return (int)(dealFactor * 100); // Scale the DEAL factor to a 0-100 range
-            }
-            return 0; // Return 0 if the transfer value is invalid
+            //TODO: FIX: its shit.
+            //return _dealFactorCalculator.CalculateDealFactor(pa, roleScores);
+            return 0;
         }
 
-        private int ParseTransferValue(string transferValueString)
-        {
-            if (string.IsNullOrWhiteSpace(transferValueString))
-            {
-                return 1000000;
-            }
-
-            return _transferValueCache.GetOrAdd(transferValueString, key =>
-            {
-                // Check if the transferValueString contains a range
-                if (key.Contains(" - "))
-                {
-                    string[] values = key.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
-                    if (values.Length == 2)
-                    {
-                        string minValueString = values[0].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-                        string maxValueString = values[1].Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-
-                        decimal minValue, maxValue;
-                        if (decimal.TryParse(minValueString, out minValue) && decimal.TryParse(maxValueString, out maxValue))
-                        {
-                            return (int)((minValue + maxValue) / 2); // Return the average of the range
-                        }
-                    }
-                }
-                else // Single value
-                {
-                    string valueString = key.Replace("€", "").Replace(".", "").Replace("K", "000").Replace("M", "000000");
-                    decimal value;
-                    if (decimal.TryParse(valueString, out value))
-                    {
-                        return (int)value;
-                    }
-                }
-                return 0;
-            });
-        }
-
-        private double CalculateAgeMultiplier(int age)
-        {
-            double baseMultiplier = 1.0;
-            double ageMultiplier = 1.0;
-
-            if (age >= 15 && age <= 20)
-            {
-                ageMultiplier = Math.Pow(1.1, 20 - age);
-            }
-
-            return (int)(baseMultiplier * ageMultiplier);
-        }
-        private double GetPersonalityMultiplier(string personality)
-        {
-            switch (personality)
-            {
-                case "Model Citizen":
-                    return 1.3;
-                case "Perfectionist":
-                    return 1.15;
-                case "Model Professional":
-                    return 1.15;
-                case "Ambitious":
-                    return 1.05;
-                case "Professional":
-                    return 1.1;
-                case "Resolute":
-                    return 1.15;
-                case "Fairly Professional":
-                    return 1.05;
-                case "Leader":
-                    return 1.05;
-                case "Iron Willed":
-                    return 1.05;
-                case "Determined":
-                    return 1.05;
-                case "Driven":
-                    return 1.05;
-                case "Resilient":
-                    return 1.05;
-                case "Charismatic":
-                    return 1.0;
-                case "Loyal":
-                    return 1.0;
-                case "Composed":
-                    return 1.0;
-                case "Honest":
-                    return 1.0;
-                case "Fairly Ambitious":
-                    return 1.0;
-                case "Spirited":
-                    return 1.05;
-                case "Fairly Sporting":
-                    return 0.95;
-                case "Sporting":
-                    return 0.95;
-                case "Temperamental":
-                    return 0.9;
-                case "Fickle":
-                    return 0.9;
-                case "Slack":
-                    return 0.85;
-                case "Low Determination":
-                    return 0.85;
-                case "Low Self-Belief":
-                    return 0.85;
-                case "Casual":
-                    return 0.85;
-                case "Easily Discouraged":
-                    return 0.8;
-                case "Spineless":
-                    return 0.8;
-                case "Unambitious":
-                    return 0.8;
-                case "Low Professionalism":
-                    return 0.8;
-                default:
-                    return 1.0;
-            }
-        }
-
-
-        private int GetAttributeWeight(string position, string attribute)
-        {
-            // Define the attribute weights for each position
-            // You can adjust these weights based on your game's requirements
-            switch (position)
-            {
-                case "S":
-                case "AM":
-                case "AM (R)":
-                case "AM (L)":
-                    switch (attribute)
-                    {
-                        case "Wor": return 3;
-                        case "Det": return 2;
-                        case "Sta": return 2;
-                        case "Pac": return 3;
-                        case "Acc": return 3;
-                        case "Tec": return 3;
-                        case "Dec": return 2;
-                        case "Ant": return 2;
-                        case "Fla": return 2;
-                        case "Nat": return 1;
-                        default: return 1;
-                    }
-                case "M":
-                case "M (R)":
-                case "M (L)":
-                case "DM":
-                    switch (attribute)
-                    {
-                        case "Wor": return 3;
-                        case "Det": return 2;
-                        case "Sta": return 3;
-                        case "Pac": return 2;
-                        case "Acc": return 2;
-                        case "Tec": return 3;
-                        case "Dec": return 3;
-                        case "Ant": return 2;
-                        case "Fla": return 2;
-                        case "Nat": return 1;
-                        default: return 1;
-                    }
-                case "D":
-                case "D (C)":
-                case "D (R)":
-                case "D (L)":
-                    switch (attribute)
-                    {
-                        case "Wor": return 2;
-                        case "Det": return 3;
-                        case "Sta": return 2;
-                        case "Pac": return 2;
-                        case "Acc": return 1;
-                        case "Tec": return 2;
-                        case "Dec": return 3;
-                        case "Ant": return 3;
-                        case "Fla": return 1;
-                        case "Nat": return 1;
-                        default: return 1;
-                    }
-                default:
-                    return 1;
-            }
-        }
 
         private int GetHeightScore(int height)
         {
